@@ -88,3 +88,23 @@ A: The download package includes a detailed visual guide (`How-to-Install.html`)
 * **Primary Support:** hy@hydigital.studio
 * **Alternative:** haoyuanbo626@gmail.com
 * **Checkout Infrastructure:** Powered securely by [Dodo Payments](https://dodopayments.com) (Merchant of Record).
+
+---
+
+## 👋 About the Developer
+
+<p align="center">
+  <img src="./developer.jpg" width="150" style="border-radius: 8px; border: 2px solid #ff2e4c; box-shadow: 0 0 20px rgba(255, 46, 76, 0.4);" alt="Bohao Yuan">
+</p>
+
+I'm **Bohao**, a solo developer and the creator of LeadSniper.
+
+I built this tool because I was spending hours every week manually searching for collaboration opportunities and target leads on LinkedIn and Twitter. The process was repetitive, exhausting, and felt like something that should be automated by a machine.
+
+So I built LeadSniper — a browser-native B2B intent radar that scans, filters, and drafts tailored responses in seconds.
+
+**Why BYOK (Bring Your Own Key)?** Because your data should remain yours. LeadSniper runs completely inside your browser. I do not want to see your keys, your leads, or your prompts — I just want to build utility tools that save you hours of work.
+
+If you have questions, feedback, or want to discuss growth marketing:
+* 📧 Email: [hy@hydigital.studio](mailto:hy@hydigital.studio)
+* 💬 Twitter/X: [Connect with me](https://x.com/BOHAOYUAN)
