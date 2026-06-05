@@ -706,5 +706,91 @@
     </div>
   </footer>
 
+  <!-- Cyberpunk Checkout Loading Overlay -->
+  <div id="payment-loader" style="display: none; position: fixed; inset: 0; background: rgba(5, 5, 10, 0.98); z-index: 100000; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace;">
+    <div style="width: 90%; max-width: 500px; background: #0b0b14; border: 1px solid #ff2e4c; border-radius: 8px; padding: 30px; box-shadow: 0 0 40px rgba(255, 46, 76, 0.4); position: relative;">
+      <!-- Scanline overlay inside modal -->
+      <div style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 229, 255, 0.015) 2px, rgba(0, 229, 255, 0.015) 4px); pointer-events: none; border-radius: 8px;"></div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a2e; padding-bottom: 15px; margin-bottom: 20px; position: relative; z-index: 1;">
+        <span style="color: #ff2e4c; font-weight: bold; font-size: 13px; letter-spacing: 1px;">🛰️ SECURE GATEWAY HANDSHAKE</span>
+        <span style="color: #00ff9d; font-size: 10px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #00ff9d; box-shadow: 0 0 6px #00ff9d; display: inline-block; animation: pulse 1s infinite;"></span> CONNECTED
+        </span>
+      </div>
+      
+      <div id="loader-console" style="color: #00e5ff; font-size: 11px; line-height: 1.8; min-height: 120px; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 5px rgba(0, 229, 255, 0.3); position: relative; z-index: 1;">
+        <!-- Logs print here -->
+      </div>
+      
+      <div style="margin-top: 25px; height: 4px; background: #111; border-radius: 2px; overflow: hidden; position: relative; z-index: 1;">
+        <div id="loader-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff2e4c, #00e5ff); transition: width 0.1s linear;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkoutLinks = document.querySelectorAll('a[href*="checkout.dodopayments.com"]');
+      const loader = document.getElementById('payment-loader');
+      const consoleEl = document.getElementById('loader-console');
+      const barEl = document.getElementById('loader-bar');
+      
+      const logs = [
+        "Initializing secure routing protocol...",
+        "Establishing SSL handshake with Dodo Payments...",
+        "Encrypting user session payload (AES-256)...",
+        "Authorizing merchant credentials at HY Digital Studio...",
+        "LeadSniper LTD Pro licensing verified.",
+        "Secure tunnel verified. Redirecting to payment portal..."
+      ];
+
+      checkoutLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetUrl = link.href;
+          
+          // Show loader (flex display)
+          loader.style.display = 'flex';
+          
+          let logIndex = 0;
+          let progress = 0;
+          
+          // Print logs sequentially
+          const printInterval = setInterval(() => {
+            if (logIndex < logs.length) {
+              const p = document.createElement('div');
+              p.textContent = `> ${logs[logIndex]}`;
+              // Make specific logs green for highlight
+              if (logs[logIndex].includes("verified")) {
+                p.style.color = "#00ff9d";
+                p.style.textShadow = "0 0 5px rgba(0, 255, 157, 0.3)";
+              }
+              consoleEl.appendChild(p);
+              consoleEl.scrollTop = consoleEl.scrollHeight;
+              logIndex++;
+            }
+          }, 220);
+
+          // Animate progress bar
+          const barInterval = setInterval(() => {
+            progress += 5;
+            if (progress <= 100) {
+              barEl.style.width = `${progress}%`;
+            }
+            if (progress >= 100) {
+              clearInterval(barInterval);
+              clearInterval(printInterval);
+              // Small delay at 100% then redirect
+              setTimeout(() => {
+                window.location.href = targetUrl;
+              }, 300);
+            }
+          }, 80);
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
