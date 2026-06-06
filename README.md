@@ -107,4 +107,5 @@ So I built LeadSniper — a browser-native B2B intent radar that scans, filters,
 
 If you have questions, feedback, or want to discuss growth marketing:
 * 📧 Email: [hy@hydigital.studio](mailto:hy@hydigital.studio)
-* 💬 Twitter/X: [Connect with me](https://x.com/BOHAOYUAN)
+* 💼 LinkedIn: [Connect on LinkedIn](https://www.linkedin.com/in/haoyuan-bo-127908392/)
+* 👾 Reddit: [Follow on Reddit](https://www.reddit.com/user/Early_Maintenance_81/)
