@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1">
-    <img src="https://img.shields.io/badge/Get%20Lifetime%20Access-%24299%20USD-ff2e4c?style=for-the-badge&logo=appveyor" alt="Buy Lifetime License">
+    <img src="https://img.shields.io/badge/Get%20Lifetime%20Access-%2499%20USD-ff2e4c?style=for-the-badge&logo=appveyor" alt="Buy Lifetime License">
   </a>
   <a href="https://bohaoyuan.github.io/LeadSniper/">
     <img src="https://img.shields.io/badge/Live%20Website-bohaoyuan.github.io-00e5ff?style=for-the-badge&logo=google-chrome" alt="Live Landing Page">
@@ -85,7 +85,7 @@ A: You load it as an unpacked extension via Chrome/Edge developer mode — the s
 A: You use your own DeepSeek or OpenAI API key. The plugin connects directly to the AI provider and never sends your data or prompts to our servers. Your API usage is billed directly and transparently by the AI vendor (e.g. $0.01 per dozen scans).
 
 **Q: Is this a subscription?**
-A: No. It's a one-time purchase of $299 (or $199 during the early bird pre-release). You get lifetime access to all core features with no recurring monthly fees.
+A: No. It's a one-time purchase of $99 (standard price $299). You get lifetime access to all core features with no recurring monthly fees.
 
 **Q: What if I have trouble installing?**
 A: The download package includes a detailed visual guide (`How-to-Install.html`). If you still need help, simply email us at [hy@hydigital.studio](mailto:hy@hydigital.studio) and we will assist you.
