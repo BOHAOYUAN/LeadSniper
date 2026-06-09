@@ -35,6 +35,8 @@ const $proTierPill = document.getElementById('proTierPill');
 const $proLockIcon = document.getElementById('proLockIcon');
 const $scarcityBadge = document.getElementById('scarcityBadge');
 const $seatsLeft = document.getElementById('seatsLeft');
+const $limitWarning = document.getElementById('limitWarning');
+const $upgradeFromWarning = document.getElementById('upgradeFromWarning');
 
 const $autoPilotThreshold = document.getElementById('autoPilotThreshold');
 const $thresholdVal = document.getElementById('thresholdVal');
@@ -158,6 +160,16 @@ function refreshLicenseUI() {
       if (percent > 100) percent = 100;
       $draftProgressFill.style.width = `${percent}%`;
       $draftProgressFill.style.background = dailyCount >= dailyLimit ? '#ef4444' : '#2563EB';
+    }
+
+    // Toggle daily limit warning strip
+    const isProTier = hasLicense && tier === 'pro';
+    if ($limitWarning) {
+      if (!isProTier && dailyCount >= dailyLimit) {
+        $limitWarning.classList.remove('hidden');
+      } else {
+        $limitWarning.classList.add('hidden');
+      }
     }
 
     if ($lowThresholdWarning) {
@@ -583,7 +595,16 @@ $openBtn.addEventListener('click', () => {
 
 const $intentSearchBtn = document.getElementById('intentSearchBtn');
 if ($intentSearchBtn) {
+  let isLaunching = false;
   $intentSearchBtn.addEventListener('click', () => {
+    if (isLaunching) return;
+    isLaunching = true;
+    
+    const origText = $intentSearchBtn.innerHTML;
+    $intentSearchBtn.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right: 6px;"></i> SCANNING...`;
+    $intentSearchBtn.disabled = true;
+    $intentSearchBtn.style.opacity = '0.7';
+
     chrome.storage.local.get([STORAGE_KEYS.NICHE], (result) => {
       const niche = result[STORAGE_KEYS.NICHE] || 'AI Automation and SaaS Growth';
       
@@ -594,7 +615,21 @@ if ($intentSearchBtn) {
       const queryReddit = `("looking for" OR "recommend" OR "anyone know" OR "suggest" OR "alternative to") AND (${niche})`;
       const urlReddit = `https://www.reddit.com/search/?q=${encodeURIComponent(queryReddit)}&sort=new`;
       chrome.tabs.create({ url: urlReddit });
+      
+      setTimeout(() => {
+        isLaunching = false;
+        $intentSearchBtn.innerHTML = origText;
+        $intentSearchBtn.disabled = false;
+        $intentSearchBtn.style.opacity = '1';
+      }, 1800);
     });
+  });
+}
+
+if ($upgradeFromWarning) {
+  $upgradeFromWarning.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open('https://checkout.dodopayments.com/buy/pdt_0NgefvmouwvkPJZIU4slr?quantity=1', '_blank');
   });
 }
 

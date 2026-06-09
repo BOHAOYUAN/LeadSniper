@@ -614,6 +614,32 @@
     .toast.show {
       bottom: 20px;
     }
+    .limit-warning {
+      background: #FEE2E2;
+      border-left: 3px solid #EF4444;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 10px;
+      margin-top: 10px;
+      color: #991B1B;
+      font-weight: 600;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .limit-warning.hidden {
+      display: none !important;
+    }
+    .limit-warning a {
+      color: #DC2626;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .limit-warning a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -724,6 +750,9 @@
       <div class="used-stats">
         <span><i class="far fa-calendar-alt"></i> Used today: <span id="usedDraftsSpan">0</span>/<span id="maxDraftsSpan">15</span></span>
         <span><i class="fas fa-sync-alt"></i> Resets daily</span>
+      </div>
+      <div id="limitWarning" class="limit-warning hidden">
+        <i class="fas fa-exclamation-triangle"></i> Daily draft limit reached. <a href="#" id="upgradeFromWarning">Upgrade to PRO →</a>
       </div>
     </div>
 
