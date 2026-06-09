@@ -397,11 +397,16 @@ function getActiveEditor(postEl) {
     }
     return document.querySelector('[role="textbox"]');
   } else if (PLATFORM === 'LinkedIn') {
-    const qlEditor = postEl.querySelector('.ql-editor') || document.querySelector('.ql-editor');
-    if (qlEditor) return qlEditor;
-    const contentEditableDiv = postEl.querySelector('div[contenteditable="true"]') || document.querySelector('div[contenteditable="true"]');
-    if (contentEditableDiv) return contentEditableDiv;
-    return postEl.querySelector('[role="textbox"]') || document.querySelector('[role="textbox"]');
+    const robustEditor = postEl.querySelector('div[contenteditable="true"][role="textbox"]') ||
+                         postEl.querySelector('div[contenteditable="true"]') ||
+                         postEl.querySelector('div[aria-label*="comment" i]') ||
+                         postEl.querySelector('div[aria-label*="评论"]') ||
+                         postEl.querySelector('div[data-placeholder*="comment" i]') ||
+                         postEl.querySelector('.ql-editor') ||
+                         document.querySelector('div[contenteditable="true"][role="textbox"]') ||
+                         document.querySelector('div[aria-label*="comment" i]') ||
+                         document.querySelector('.ql-editor');
+    if (robustEditor) return robustEditor;
   } else if (PLATFORM === 'Reddit') {
     return document.querySelector('shreddit-composer div[contenteditable="true"]') || 
            document.querySelector('div[contenteditable="true"]') ||
@@ -410,6 +415,169 @@ function getActiveEditor(postEl) {
     return document.querySelector('textarea[name="text"]');
   }
   return document.querySelector('[contenteditable="true"], [role="textbox"]');
+}
+
+// ── AUTO-PILOT FUNCTIONS ──
+function showLinkedInToast(textToCopy) {
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    let toast = document.getElementById('ls-linkedin-autopilot-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'ls-linkedin-autopilot-toast';
+      toast.style.cssText = `
+        position: fixed; top: 30px; right: 30px; z-index: 2147483647;
+        background: #0a0a0f; border: 1.5px dashed #00ff9d; color: #fff;
+        padding: 12px 20px; border-radius: 8px; font-family: monospace;
+        font-size: 12px; box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+        display: flex; align-items: center; gap: 10px;
+        animation: ls-slide-in-right 0.3s ease-out;
+      `;
+      
+      if (!document.getElementById('ls-toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'ls-toast-styles';
+        style.innerHTML = `
+          @keyframes ls-slide-in-right {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes ls-checkmark-draw {
+            to { stroke-dashoffset: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      document.body.appendChild(toast);
+    }
+    
+    toast.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" style="stroke-dasharray: 22; stroke-dashoffset: 22; animation: ls-checkmark-draw 0.4s ease-out forwards;"></polyline>
+      </svg>
+      <div>
+        <span style="color:#00ff9d; font-weight:bold;">🛰️ LeadSniper Auto-Pilot:</span> Draft Copied!
+        <div style="color:#aaa; font-size:10px; margin-top:2px;">Click Comment field and press <b>Ctrl+V</b> to paste.</div>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.5s ease';
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 500);
+    }, 5000);
+  }).catch(err => {
+    console.warn("[LeadSniper] Clipboard copy failed:", err);
+  });
+}
+
+function injectAutoPilotReadyBadge(editor, postEl) {
+  if (postEl.querySelector('.ls-autopilot-ready-badge')) return;
+  
+  const badge = document.createElement('div');
+  badge.className = 'ls-autopilot-ready-badge';
+  badge.style.cssText = `
+    font-size: 10px; color: #00ff9d; font-family: monospace;
+    background: rgba(0, 255, 157, 0.1); border: 1px solid #00ff9d;
+    padding: 3px 8px; border-radius: 4px; display: inline-flex;
+    align-items: center; gap: 4px; margin-top: 6px; font-weight: bold;
+    animation: ls-pulse-glow 1.5s infinite ease-in-out;
+  `;
+  badge.innerHTML = `🛰️ LeadSniper Auto-Filled (Ready to Send)`;
+  
+  const parent = editor.parentElement;
+  if (parent) {
+    parent.appendChild(badge);
+  } else {
+    editor.after(badge);
+  }
+  
+  if (!document.getElementById('ls-badge-styles')) {
+    const style = document.createElement('style');
+    style.id = 'ls-badge-styles';
+    style.innerHTML = `
+      @keyframes ls-pulse-glow {
+        0%, 100% { box-shadow: 0 0 3px rgba(0,255,157,0.3); opacity: 0.9; }
+        50% { box-shadow: 0 0 8px rgba(0,255,157,0.6); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+async function typeIntoEditor(editor, text, postEl) {
+  editor.focus();
+  document.execCommand('selectAll', false, null);
+  document.execCommand('delete', false, null);
+  
+  let index = 0;
+  let isInterrupted = false;
+  
+  const interruptHandler = (e) => {
+    if (!isInterrupted) {
+      isInterrupted = true;
+      console.log("[LeadSniper] Typist simulator interrupted by user. Performing fast-fill...");
+      document.execCommand('selectAll', false, null);
+      document.execCommand('insertText', false, text);
+      cleanup();
+    }
+  };
+  
+  editor.addEventListener('keydown', interruptHandler, { capture: true });
+  editor.addEventListener('mousedown', interruptHandler, { capture: true });
+  
+  const cleanup = () => {
+    editor.removeEventListener('keydown', interruptHandler, { capture: true });
+    editor.removeEventListener('mousedown', interruptHandler, { capture: true });
+    injectAutoPilotReadyBadge(editor, postEl);
+  };
+  
+  const typeChar = () => {
+    if (isInterrupted) return;
+    if (index < text.length) {
+      const char = text[index++];
+      document.execCommand('insertText', false, char);
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      const delay = 20 + Math.random() * 40;
+      setTimeout(typeChar, delay);
+    } else {
+      cleanup();
+    }
+  };
+  
+  typeChar();
+}
+
+async function triggerAutoPilot(postEl, replies) {
+  if (!replies) return;
+  const replyText = replies.Professional || replies.Humor || replies.Director;
+  if (!replyText) return;
+
+  console.log("[LeadSniper] Auto-Pilot triggering outreach sequence...");
+
+  if (PLATFORM === 'X') {
+    const replyBtn = postEl.querySelector('[data-testid="reply"]');
+    if (replyBtn) {
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 200));
+      replyBtn.click();
+      
+      let attempts = 0;
+      const interval = setInterval(() => {
+        const editor = getActiveEditor(postEl);
+        if (editor) {
+          clearInterval(interval);
+          setTimeout(() => {
+            typeIntoEditor(editor, replyText, postEl);
+          }, 300);
+        }
+        attempts++;
+        if (attempts > 15) clearInterval(interval);
+      }, 500);
+    }
+  } else if (PLATFORM === 'LinkedIn') {
+    showLinkedInToast(replyText);
+  }
 }
 
 // ── RPA ──
@@ -480,7 +648,10 @@ async function simulateRPA(postEl, text) {
     inputArea.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ' ', keyCode: 32 }));
   } else {
     // LinkedIn
-    const commentBtn = postEl.querySelector('button[aria-label*="Comment"], button[aria-label*="评论"], button[aria-label*="comment"]');
+    const commentBtn = postEl.querySelector('button[aria-label*="Comment" i]') ||
+                       postEl.querySelector('button[aria-label*="评论"]') ||
+                       postEl.querySelector('button[data-control-name="comment"]') ||
+                       postEl.querySelector('button[aria-label*="comment" i]');
     if (commentBtn) commentBtn.click();
     await new Promise(r => setTimeout(r, 800));
     
@@ -820,6 +991,16 @@ function processPost(post) {
       post.style.opacity = "1";
       injectHUD(post, response.Confidence_Score, response.Intelligence_Summary || response.Pain_Point_Analysis, response.Enriched_Profile, response.Replies, 'HOT');
       
+      // AUTO-PILOT INITIATION
+      chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold'], (settings) => {
+        const autopilotActive = settings.leadsniper_autopilot === true;
+        const threshold = settings.leadsniper_autopilot_threshold || 85;
+        
+        if (autopilotActive && !document.hidden && response.Confidence_Score >= threshold) {
+          triggerAutoPilot(post, response.Replies);
+        }
+      });
+
       // AUTO-HUNTER LOCK TRIGGER
       if (IS_AUTO_HUNTER && response.Confidence_Score >= 85) {
         IS_SCROLL_PAUSED = true;

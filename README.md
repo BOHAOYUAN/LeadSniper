@@ -61,6 +61,9 @@ Generates three distinct contextual copy-and-paste outreach drafts (Professional
 ### 4. Continuous Database Sync
 Fully supports custom webhook endpoints (Notion, Make.com, Airtable, CRMs). Automatically push lead metadata, contact details, and custom drafts to your active pipelines in one click.
 
+### 5. Semi-Autonomous Auto-Pilot
+Automate signal capture, scoring, and text pre-filling with typist emulation and interruption protection. Keeps you in control while removing 90% of manual outreach typing.
+
 ---
 
 ## 📥 Getting Started (Quick 4-Step Installation)
@@ -85,7 +88,9 @@ A: You load it as an unpacked extension via Chrome/Edge developer mode — the s
 A: You use your own DeepSeek or OpenAI API key. The plugin connects directly to the AI provider and never sends your data or prompts to our servers. Your API usage is billed directly and transparently by the AI vendor (e.g. $0.01 per dozen scans).
 
 **Q: Is this a subscription?**
-A: No. It's a one-time purchase of $99 (standard price $299). You get lifetime access to all core features with no recurring monthly fees.
+A: No. It is a lifetime license buy-out. We offer two pricing tiers:
+* **LTD Basic ($199 one-time)**: Core features, 1 active installation limit, excludes Auto-Pilot.
+* **LTD Pro ($99 one-time Founding Special // normally $499)**: All features, 3 active installations limit, includes Semi-Autonomous Auto-Pilot.
 
 **Q: What if I have trouble installing?**
 A: The download package includes a detailed visual guide (`How-to-Install.html`). If you still need help, simply email us at [hy@hydigital.studio](mailto:hy@hydigital.studio) and we will assist you.

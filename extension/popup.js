@@ -29,6 +29,11 @@ const $testConnBtn = document.getElementById('testConnBtn');
 const $toast    = document.getElementById('toast');
 const $statusDot = document.querySelector('.status-dot');
 
+const $autoPilotSwitch = document.getElementById('autoPilotSwitch');
+const $autoPilotThreshold = document.getElementById('autoPilotThreshold');
+const $thresholdVal = document.getElementById('thresholdVal');
+const $autoPilotLock = document.getElementById('autoPilotLock');
+
 // Load values
 chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
   $apiKey.value     = result[STORAGE_KEYS.API_KEY] || '';
@@ -60,7 +65,47 @@ chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
     const isAutoHunter = res.leadsniper_autohunter === true;
     if ($autoHunterSwitch) $autoHunterSwitch.checked = isAutoHunter;
   });
+
+  // Auto-Pilot switch and threshold state
+  refreshLicenseUI();
 });
+
+function refreshLicenseUI() {
+  chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier'], (res) => {
+    const isAutoPilot = res.leadsniper_autopilot === true;
+    const threshold = res.leadsniper_autopilot_threshold || 85;
+    const hasLicense = res.leadsniper_license_valid === true;
+    const tier = res.leadsniper_license_tier || 'basic';
+
+    if ($autoPilotSwitch) {
+      if (!hasLicense) {
+        $autoPilotSwitch.checked = false;
+        $autoPilotSwitch.disabled = true;
+        if ($autoPilotLock) {
+          $autoPilotLock.style.display = 'inline-block';
+          $autoPilotLock.innerHTML = '🔒';
+          $autoPilotLock.title = "Buy License to Unlock Auto-Pilot";
+        }
+      } else if (tier === 'basic') {
+        $autoPilotSwitch.checked = false;
+        $autoPilotSwitch.disabled = true;
+        if ($autoPilotLock) {
+          $autoPilotLock.style.display = 'inline-block';
+          $autoPilotLock.innerHTML = '🔒 <span style="font-size: 8px; color: #ff2e4c; font-weight: bold; vertical-align: middle; text-decoration: underline;">UPGRADE</span>';
+          $autoPilotLock.title = "Upgrade to Pro to Unlock Auto-Pilot";
+        }
+      } else {
+        $autoPilotSwitch.checked = isAutoPilot;
+        $autoPilotSwitch.disabled = false;
+        if ($autoPilotLock) $autoPilotLock.style.display = 'none';
+      }
+    }
+    if ($autoPilotThreshold) {
+      $autoPilotThreshold.value = threshold;
+      if ($thresholdVal) $thresholdVal.textContent = threshold;
+    }
+  });
+}
 
 function updateStatusDot(active) {
   $statusDot.style.background = active ? '#00ff9d' : '#ff2e4c';
@@ -87,6 +132,38 @@ if ($muteSoundSwitch) {
     const active = $muteSoundSwitch.checked;
     chrome.storage.local.set({ [STORAGE_KEYS.MUTE_SOUND]: active });
     showToast(active ? '🔇 SOUND MUTED' : '🔊 SOUND ENABLED', false);
+  });
+}
+
+if ($autoPilotSwitch) {
+  $autoPilotSwitch.addEventListener('change', () => {
+    const active = $autoPilotSwitch.checked;
+    chrome.storage.local.set({ leadsniper_autopilot: active });
+    showToast(active ? '🛰️ AUTO-PILOT ON' : '💤 AUTO-PILOT OFF', !active);
+  });
+}
+
+if ($autoPilotThreshold) {
+  $autoPilotThreshold.addEventListener('input', () => {
+    if ($thresholdVal) $thresholdVal.textContent = $autoPilotThreshold.value;
+  });
+  $autoPilotThreshold.addEventListener('change', () => {
+    chrome.storage.local.set({ leadsniper_autopilot_threshold: parseInt($autoPilotThreshold.value, 10) });
+  });
+}
+
+if ($autoPilotLock) {
+  $autoPilotLock.addEventListener('click', () => {
+    chrome.storage.local.get(['leadsniper_license_valid', 'leadsniper_license_tier'], (res) => {
+      const hasLicense = res.leadsniper_license_valid === true;
+      const tier = res.leadsniper_license_tier;
+      if (!hasLicense) {
+        window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
+      } else if (tier === 'basic') {
+        // Redirect to upgrade
+        window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
+      }
+    });
   });
 }
 
@@ -220,6 +297,7 @@ $saveBtn.addEventListener('click', async () => {
     [STORAGE_KEYS.MUTE_SOUND]: muteSound
   }, () => {
     $saveBtn.textContent = origText;
+    refreshLicenseUI();
     showToast('✅ SECURED & LOCKED', false);
   });
 });

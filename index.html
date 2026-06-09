@@ -392,28 +392,71 @@
       margin-bottom: 100px;
     }
 
-    .pricing-card {
-      max-width: 550px;
+    .pricing-grid {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      max-width: 1000px;
       margin: 0 auto;
+    }
+
+    .pricing-card {
+      flex: 1;
+      min-width: 300px;
+      max-width: 460px;
       background: rgba(11, 11, 20, 0.8);
       backdrop-filter: blur(12px);
-      border: 2px solid var(--accent);
+      border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 50px 40px;
-      box-shadow: var(--glow);
+      padding: 40px 30px;
       position: relative;
+      transition: all 0.3s;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--neon-cyan);
+    }
+
+    .pricing-card.featured {
+      border: 2px solid var(--accent);
+      box-shadow: var(--glow);
+    }
+
+    .pricing-card.featured:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 35px rgba(255, 46, 76, 0.5);
     }
 
     .pricing-card::before {
-      content: 'LIMITED PRE-RELEASE';
+      content: 'STANDARD LTD';
       position: absolute;
       top: -15px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--accent);
-      color: white;
+      background: #111119;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-dim);
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 4px 16px;
+      border-radius: 100px;
+      letter-spacing: 2px;
+    }
+
+    .pricing-card.featured::before {
+      content: 'FOUNDING SPECIAL (LTD PRO)';
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 10px;
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
       font-weight: bold;
       padding: 4px 16px;
       border-radius: 100px;
@@ -568,9 +611,9 @@
   <section class="hero">
     <div class="container">
       <span class="badge">Active Signal Intelligence</span>
-      <h1>Stop Cold Emailing.<br>Lock Target with <span>LeadSniper</span></h1>
+      <h1>AI Drafts the Perfect Reply.<br>You Pull the Trigger.</h1>
       <p class="hero-subtitle">
-        The browser-native tactical intent radar for B2B founders. Scan real-time pain points on Twitter (X) and LinkedIn, identify high-value buyers, and craft flawless AI outreach in 3 seconds.
+        The browser-native B2B intent radar for X (Twitter) & LinkedIn. Auto-scan buyer signals, draft context-aware outbound replies, and achieve 10x faster social outreach with 100% platform safety.
       </p>
       <div class="cta-group">
         <a href="https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1" class="btn-primary">Get Lifetime Access</a>
@@ -631,6 +674,11 @@
         <h3>Continuous Database Sync</h3>
         <p>Fully supports custom webhook endpoints (Notion, Make.com, Airtable, CRMs). Automatically push lead metadata, contact details, and custom drafts to your active pipelines in one click.</p>
       </div>
+      <div class="feature-card">
+        <div class="feature-icon">05 //</div>
+        <h3>Semi-Autonomous Auto-Pilot</h3>
+        <p>Automate signal capture, scoring, and text pre-filling with typist emulation and interruption protection. Keeps you in control while removing 90% of manual outreach typing.</p>
+      </div>
     </div>
   </section>
 
@@ -640,27 +688,54 @@
       <h2 style="font-family: var(--font-display); font-size: 36px; margin-bottom: 10px;">Kill Your Monthly Subscriptions. Pay Once, Get Leads Forever.</h2>
       <p style="color: var(--text-dim); margin-bottom: 50px; font-weight: 300;">Launch special limited to the first 50 founding members. Price returns to $299 thereafter.</p>
       
-      <div class="pricing-card">
-        <h3>LTD PRO ACCESS</h3>
-        <span class="price-original">Standard $299.00 USD</span>
-        <div class="price">$99.00 <span>USD / One-time</span></div>
-        <div style="margin-bottom: 20px;"></div>
-        
-        <ul class="pricing-features">
-          <li>Lifetime license with 3 active installations limit</li>
-          <li>Real-time 3D WebGL radar visualization</li>
-          <li>DeepSeek V3 / OpenAI custom endpoint support (BYOK)</li>
-          <li>Automated lead scoring & noise elimination</li>
-          <li>1-Click make.com/Notion Webhook CRM syncing</li>
-          <li>Free lifetime system updates</li>
-        </ul>
-        
-        <a href="https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1" class="btn-primary" style="display: block; margin-top: 30px;">Buy License Key</a>
-        <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 10px; margin-bottom: 15px; line-height: 1.4; text-align: center;">
+      <div class="pricing-grid">
+        <!-- Basic Card -->
+        <div class="pricing-card">
+          <h3>LTD BASIC</h3>
+          <span class="price-original">Standard $199.00 USD</span>
+          <div class="price">$199.00 <span>USD / One-time</span></div>
+          <div style="margin-bottom: 20px;"></div>
+          
+          <ul class="pricing-features">
+            <li>Lifetime license with 1 active installation limit</li>
+            <li>Real-time 3D WebGL radar visualization</li>
+            <li>DeepSeek V3 / OpenAI custom endpoint support (BYOK)</li>
+            <li>Automated lead scoring & noise elimination</li>
+            <li>1-Click Notion/CRM Webhook syncing</li>
+            <li>Free lifetime system updates</li>
+            <li style="color:var(--text-dim); text-decoration: line-through; opacity: 0.5;">Semi-Autonomous Auto-Pilot Mode</li>
+          </ul>
+          
+          <a href="https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1" class="btn-secondary" style="display: block; margin-top: 30px;">Buy Basic License</a>
+        </div>
+
+        <!-- Pro Card (Featured) -->
+        <div class="pricing-card featured">
+          <h3>LTD PRO ACCESS</h3>
+          <span class="price-original">Standard $499.00 USD</span>
+          <div class="price" style="color:var(--neon-green)">$99.00 <span>USD / One-time</span></div>
+          <div style="margin-bottom: 20px;"></div>
+          
+          <ul class="pricing-features">
+            <li>Lifetime license with 3 active installations limit</li>
+            <li>Real-time 3D WebGL radar visualization</li>
+            <li>DeepSeek V3 / OpenAI custom endpoint support (BYOK)</li>
+            <li>Automated lead scoring & noise elimination</li>
+            <li>1-Click Notion/CRM Webhook syncing</li>
+            <li>Free lifetime system updates</li>
+            <li style="color:var(--neon-green); font-weight: bold;">⚡ Semi-Autonomous Auto-Pilot Mode</li>
+          </ul>
+          
+          <a href="https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1" class="btn-primary" style="display: block; margin-top: 30px; box-shadow: 0 0 20px rgba(0, 255, 157, 0.4); background: linear-gradient(135deg, var(--neon-green), #00b36e); color: #000; border: none;">Claim Founding Seat ($99)</a>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+        <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); line-height: 1.4; text-align: center; max-width: 600px;">
           🔒 Includes: Obfuscated Extension + How-to-Install.html Safety Guide.<br>Loaded via browser's official developer mode, no scripts executed.
         </div>
         
-        <div class="guarantee-badge">
+        <div class="guarantee-badge" style="max-width: 650px; margin-top: 10px;">
           🛡️ <b>30-Day Money-Back Guarantee:</b> If you don't close at least one client with LeadSniper within 30 days of setup, we'll refund 100% of your payment.
         </div>
       </div>

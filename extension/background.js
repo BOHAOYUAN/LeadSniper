@@ -11,33 +11,68 @@ const STORAGE_KEYS = {
 let activeRequests = 0;
 const requestQueue = [];
 let storedRadarTargets = [];
+const analysisCache = new Map();
 
-const REQUEST_TIMEOUT = 15000; // 15s timeout
+const REQUEST_TIMEOUT = 30000; // 30s timeout
+
+// Clear analysis cache when critical configs change
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  const keysToWatch = ['leadsniper_api_key', 'leadsniper_niche', 'leadsniper_value_prop', 'leadsniper_model', 'leadsniper_endpoint'];
+  const hasRelevantChange = Object.keys(changes).some(key => keysToWatch.includes(key));
+  if (hasRelevantChange) {
+    console.log("[LeadSniper] Config changed. Clearing post analysis cache.");
+    analysisCache.clear();
+  }
+});
 
 function enqueueRequest(fn) {
   return new Promise((resolve, reject) => {
+    let isSettled = false;
+
     const execute = async () => {
       activeRequests++;
+
       const timeoutId = setTimeout(() => {
-         // Timeout fallback handler
+        if (!isSettled) {
+          isSettled = true;
+          console.warn("[LeadSniper] Queue execution timed out after 30 seconds.");
+          reject(new Error("Request timed out after 30 seconds."));
+          next();
+        }
       }, REQUEST_TIMEOUT);
-      
-      try { 
-        const result = await fn(); 
-        resolve(result); 
-      } 
-      catch (e) { 
-        console.error("[LeadSniper] Request error:", e);
-        reject(e); 
-      } 
-      finally {
+
+      const next = () => {
         clearTimeout(timeoutId);
         activeRequests--;
-        if (requestQueue.length > 0) requestQueue.shift()();
+        if (requestQueue.length > 0) {
+          const nextCall = requestQueue.shift();
+          nextCall();
+        }
+      };
+
+      try {
+        const result = await fn();
+        if (!isSettled) {
+          isSettled = true;
+          resolve(result);
+          next();
+        }
+      } 
+      catch (e) {
+        console.error("[LeadSniper] Request error:", e);
+        if (!isSettled) {
+          isSettled = true;
+          reject(e);
+          next();
+        }
       }
     };
-    if (activeRequests < 3) execute();
-    else requestQueue.push(execute);
+
+    if (activeRequests < 1) {
+      execute();
+    } else {
+      requestQueue.push(execute);
+    }
   });
 }
 
@@ -138,12 +173,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type !== 'ANALYZE_POST') return false;
   
+  const postId = message.id;
+  if (postId && analysisCache.has(postId)) {
+    console.log(`[LeadSniper] Cache Hit for post ID ${postId}. Returning cached analysis.`);
+    sendResponse(analysisCache.get(postId));
+    return true;
+  }
+  
   console.log("[LeadSniper] Analysis Requested for:", message.authorName);
   message.tabId = sender.tab ? sender.tab.id : null;
   
   handleAnalysis(message)
     .then(result => {
       console.log("[LeadSniper] Analysis Complete:", result);
+      if (postId && result && !result.error && !result.locked) {
+        analysisCache.set(postId, result);
+      }
       sendResponse(result);
     })
     .catch(err => {
@@ -373,19 +418,26 @@ Output ONLY valid JSON:
 
 async function callAIEnrich(config, postText, profileData) {
   const valueProp = config['leadsniper_value_prop'] || "";
-  const prompt = `You are a tactical B2B infiltrator and master outreach scriptwriter. 
+  const prompt = `You are a tactical B2B outreach engineer writing high-converting tech replies.
 Post: "${postText}"
 Profile Bio: "${profileData.bio}"
 Company Info: "${profileData.company}"
-${valueProp ? `Your Product/Service Value Proposition to naturally weave into the replies: "${valueProp}"` : ''}
+${valueProp ? `Our Product Value Proposition: "${valueProp}"` : ''}
 
-Provide a deep commercial intent analysis. Output ONLY TRUE JSON:
+CRITICAL STYLE MANUAL (GEEK/BILL-GATES STYLE):
+1. Keep replies strictly under 250 characters.
+2. Tone must be technical, engineering-focused, direct, logical, and highly concise (like Bill Gates discussing code/architecture).
+3. Absolutely NO marketing fluff, NO generic sales pitch language, and NO emojis (do NOT use 🚀, ⚡, 🛰️, etc.).
+4. Use precise technical terminology. Treat the prospect as a fellow engineer/builder.
+5. Address their specific problem directly.
+
+Provide a deep commercial intent analysis. Output ONLY valid JSON:
 {
-  "Intelligence_Summary": "1-sentence clear tactical intel on how to approach.",
+  "Intelligence_Summary": "1-sentence clear tactical engineering Intel on how to approach.",
   "Replies": {
-    "Professional": "An extremely professional, value-driven reply.",
-    "Humor": "A witty cold humor reply to break the pattern.",
-    "Director": "A director-mindset reply framed as storytelling/visionary angle."
+    "Professional": "A highly professional, logic-first technical reply.",
+    "Humor": "A witty, dry developer/engineering humor reply.",
+    "Director": "A system-architect/storytelling-style technical reply."
   }
 }`;
   return await sendPrompt(config, prompt, "Enrich Target");
