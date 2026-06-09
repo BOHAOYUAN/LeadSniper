@@ -1,7 +1,7 @@
-# LeadSniper 3.0 — 60s Video Demo Script
+# LeadSniper 3.0 — 60s Video Demo Script (Multi-Platform Edition)
 ## High-Converting B2B Launch Video (AI Voiceover Edition)
 
-* **Voiceover Tone**: Professional, energetic, authoritative, and direct. (Highly optimized for AI voice generators like **ElevenLabs** using voices like "Adam", "Antoni", or "Marcus".)
+* **Voiceover Tone**: Professional, energetic, authoritative, and direct. (Optimized for AI voice generators like **ElevenLabs** using voices like "Adam", "Antoni", or "Marcus".)
 * **Visual Style**: Clean browser recording using a tool like **Screen Studio** or Windows built-in screen recorder, focusing on smooth transitions, zooms, and mouse hover indicators.
 * **Music Recommendation**: Low-volume, high-energy Synthwave or Cyberpunk track in the background.
 
@@ -9,53 +9,13 @@
 
 ## 🎬 Storyboard & Voiceover Timeline
 
-### [0:00 - 0:12] Phase 1: The B2B Goldmine Hook
-* **Visual Action**: 
-  1. Open a search feed on **X (Twitter)** or **LinkedIn** showing prospects asking B2B queries (e.g. *"Anyone know a good tool to automate customer success?"*).
-  2. The cursor highlights a high-intent B2B post.
-* **Voiceover (VO)**: 
-  > *"Every single day, your ideal customers are posting their pain points directly on social media. But you’re missing them because manually scrolling through feeds is a waste of time. Not anymore."*
-
----
-
-### [0:12 - 0:28] Phase 2: Introducing the 3D WebGL Radar
-* **Visual Action**:
-  1. Click the **LeadSniper 3.0** icon in the Chrome extension bar to reveal the sleek Control Center.
-  2. Click **LAUNCH INTENT SEARCH** (the button displays a loading spinner: `SCANNING...` for 1.8s).
-  3. The **3D Radar Sidepanel** slides open on the right, showing the pulsing WebGL concentric rings and particle nodes plotting targets in real-time.
-* **Voiceover (VO)**: 
-  > *"Meet LeadSniper 3.0. A browser-native B2B social intent radar. Launch the radar, scroll your feeds, and watch LeadSniper translate raw social data into an immersive, real-time 3D target map."*
-
----
-
-### [0:28 - 0:42] Phase 3: AI Intent Qualification (BYOK)
-* **Visual Action**:
-  1. Click on a pulsing red particle node in the 3D WebGL grid.
-  2. The **Target Detail Drawer** slides open, displaying:
-     * **Intent Score**: `92`
-     * **Brain Strategic Reasoning**: *"Decision-maker seeking an automation tool."*
-     * **Enriched Corporate Parameters**: Organization info and prospect bio.
-* **Voiceover (VO)**: 
-  > *"Using a secure Bring Your Own Key setup, LeadSniper sends the context directly to DeepSeek or OpenAI. In milliseconds, it qualifies the B2B lead, scores their buying intent, and highlights their exact pain points."*
-
----
-
-### [0:42 - 0:53] Phase 4: Custom Outreach & CRM Webhook Sync
-* **Visual Action**:
-  1. Scroll down the drawer to show three outreach drafts: **Highly Professional**, **Cold Humor**, and **Director Mindset**.
-  2. Click **SYNC TO CRM** (the button flashes `✅ CLOUD SYNC SUCCESS`).
-  3. Click **⚡ DIRECT SNIPE** (the button flashes `✅ DIRECT SNIPE EXECUTED` and the text is auto-populated in the browser's social reply box).
-* **Voiceover (VO)**: 
-  > *"It immediately generates three contextual outreach drafts tailored to your product. One click pushes the qualified lead dossier straight to your CRM webhook, and auto-populates the response. Zero copy-pasting required."*
-
----
-
-### [0:53 - 1:05] Phase 5: Privacy First & Call to Action
-* **Visual Action**:
-  1. Hover over the **100% secure local storage (BYOK)** badge in the extension popup.
-  2. Switch to the beautiful landing page: `bohaoyuan.github.io/LeadSniper` showing the checkout pricing cards.
-* **Voiceover (VO)**: 
-  > *"Your API keys and leads stay 100% locally in your browser storage. No middlemen, no databases. Get lifetime access today on our Founding Special before seats run out, and turn your browser into a client acquisition machine."*
+| Duration | Visual Action | Voiceover (VO) Text |
+| :--- | :--- | :--- |
+| **0:00 - 0:12** | **The Hook**: Quick transition showing a LinkedIn feed ➡️ an X (Twitter) search page ➡️ a Reddit discussion board (2-3 seconds per platform). | *"Every single day, your ideal customers are posting their pain points across **LinkedIn, X, Reddit, and niche forums**. But tracking all those channels manually is impossible — and you're missing deals."* |
+| **0:12 - 0:28** | **The 3D WebGL Radar**: 1. Click the extension icon. 2. Click the blue **LAUNCH INTENT SEARCH** button (displays spinner loading state). 3. The 3D WebGL radar sidepanel slides open, plotting targets in real-time. | *"Meet LeadSniper 3.0. A browser-native B2B intent radar that works across **every platform you sell on**. Launch the radar, scroll any feed — LinkedIn, X, Reddit — and watch LeadSniper translate raw social data into a real‑time 3D target map. **More channels coming every month.**"* |
+| **0:28 - 0:42** | **AI Intent Scoring**: Click a pulsing node in the 3D grid. The Target Detail Drawer slides open, displaying: **Intent Score** (92), B2B **Strategic Reasoning**, and target company bio. | *"Using your own API key (BYOK), LeadSniper sends the post context to DeepSeek or OpenAI. In milliseconds, it qualifies the lead, scores buying intent, and highlights their exact pain points — **no matter which platform they're on.**"* |
+| **0:42 - 0:53** | **One-Click Outreach & CRM**: 1. Show the three outreach variants (Professional, Humor, Storytelling). 2. Click **SYNC TO CRM** (flashes green success). 3. Click **⚡ DIRECT SNIPE** (copies and auto-populates the reply box). | *"It instantly generates three tailored outreach drafts. One click pushes the qualified lead dossier to your CRM webhook, and auto‑populates the reply. Zero copy‑pasting, **zero platform switching.**"* |
+| **0:53 - 1:05** | **Privacy & CTA**: 1. Hover over the **100% secure local storage (BYOK)** badge in the popup. 2. Cut to the beautiful landing page pricing cards showing founding seat limits. | *"Your API keys and data stay 100% locally stored. No middlemen, no cloud databases. Get lifetime access today before founding seats run out, and turn your browser into a **cross‑platform client acquisition machine. More channels — Slack, Discord — are on the roadmap.**"* |
 
 ---
 
