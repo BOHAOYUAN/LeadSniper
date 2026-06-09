@@ -72,7 +72,19 @@ function safeSendMessage(msg, callback) {
   }
 }
 
+let isScrammed = false;
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'SCRAM_KILL') {
+    console.warn('🛑 [LeadSniper] SCRAM emergency stop initiated.');
+    isScrammed = true;
+    document.querySelectorAll('.ls-autopilot-ready-badge').forEach(el => el.remove());
+    const toast = document.getElementById('ls-linkedin-autopilot-toast');
+    if (toast) toast.remove();
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (msg.type === 'SCROLL_TO_POST' && msg.id) {
     const el = document.querySelector(`[data-ls-id="${msg.id}"]`);
     if (el) {
@@ -511,7 +523,7 @@ async function typeIntoEditor(editor, text, postEl) {
   let isInterrupted = false;
   
   const interruptHandler = (e) => {
-    if (!isInterrupted) {
+    if (!isInterrupted && !isScrammed) {
       isInterrupted = true;
       console.log("[LeadSniper] Typist simulator interrupted by user. Performing fast-fill...");
       document.execCommand('selectAll', false, null);
@@ -527,11 +539,18 @@ async function typeIntoEditor(editor, text, postEl) {
     editor.removeEventListener('keydown', interruptHandler, { capture: true });
     editor.removeEventListener('mousedown', interruptHandler, { capture: true });
     editor.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ' ', keyCode: 32 }));
-    injectAutoPilotReadyBadge(editor, postEl);
+    if (!isScrammed) {
+      injectAutoPilotReadyBadge(editor, postEl);
+    }
   };
   
   const typeChar = () => {
     if (isInterrupted) return;
+    if (isScrammed) {
+      editor.removeEventListener('keydown', interruptHandler, { capture: true });
+      editor.removeEventListener('mousedown', interruptHandler, { capture: true });
+      return;
+    }
     if (index < text.length) {
       const char = text[index++];
       document.execCommand('insertText', false, char);
@@ -866,6 +885,11 @@ try {
   });
   
   chrome.storage.onChanged.addListener((changes) => {
+    if (changes.leadsniper_autopilot) {
+      if (changes.leadsniper_autopilot.newValue === true) {
+        isScrammed = false;
+      }
+    }
     if (changes.leadsniper_active) {
       IS_ACTIVE = changes.leadsniper_active.newValue !== false;
       const radar = document.getElementById('ls-radar');
@@ -989,14 +1013,47 @@ function processPost(post) {
       injectHUD(post, response.Confidence_Score, response.Intelligence_Summary || response.Pain_Point_Analysis, response.Enriched_Profile, response.Replies, 'HOT');
       
       // AUTO-PILOT INITIATION
-      chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier'], (settings) => {
+      chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier', 'leadsniper_autopilot_daily_count', 'leadsniper_autopilot_daily_limit', 'leadsniper_autopilot_last_reset_date'], (settings) => {
         const autopilotActive = settings.leadsniper_autopilot === true;
         const threshold = settings.leadsniper_autopilot_threshold || 85;
         const hasLicense = settings.leadsniper_license_valid === true;
         const tier = settings.leadsniper_license_tier || 'basic';
         
-        if (autopilotActive && hasLicense && tier === 'pro' && !document.hidden && response.Confidence_Score >= threshold) {
-          triggerAutoPilot(post, response.Replies);
+        if (autopilotActive && hasLicense && tier === 'pro' && !document.hidden && !isScrammed && response.Confidence_Score >= threshold) {
+          const today = new Date().toDateString();
+          let dailyCount = settings.leadsniper_autopilot_daily_count || 0;
+          const dailyLimit = settings.leadsniper_autopilot_daily_limit || 15;
+          const lastReset = settings.leadsniper_autopilot_last_reset_date || "";
+
+          if (lastReset !== today) {
+            dailyCount = 0;
+            chrome.storage.local.set({
+              leadsniper_autopilot_daily_count: 0,
+              leadsniper_autopilot_last_reset_date: today
+            });
+          }
+
+          if (dailyCount < dailyLimit) {
+            chrome.storage.local.set({ leadsniper_autopilot_daily_count: dailyCount + 1 });
+            triggerAutoPilot(post, response.Replies);
+          } else {
+            console.warn(`[LeadSniper] Auto-Pilot daily limit of ${dailyLimit} reached. Skipping pre-fill.`);
+            const warningBadge = document.createElement('div');
+            warningBadge.className = 'ls-autopilot-limit-badge';
+            warningBadge.style.cssText = `
+              font-size: 10px; color: #ff9800; font-family: monospace;
+              background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800;
+              padding: 3px 8px; border-radius: 4px; display: inline-flex;
+              align-items: center; gap: 4px; margin-top: 6px; font-weight: bold;
+            `;
+            warningBadge.innerHTML = `⚠️ Auto-Pilot Daily Limit (${dailyLimit}) Reached`;
+            const hud = post.querySelector('.ls-hud');
+            if (hud) {
+              hud.appendChild(warningBadge);
+            } else {
+              post.appendChild(warningBadge);
+            }
+          }
         }
       });
 

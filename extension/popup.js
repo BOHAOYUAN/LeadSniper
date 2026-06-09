@@ -8,7 +8,9 @@ const STORAGE_KEYS = {
   AUTO_SYNC: 'leadsniper_auto_sync',
   VALUE_PROP: 'leadsniper_value_prop',
   MUTE_SOUND: 'leadsniper_mute_sound',
-  BLACKLIST: 'leadsniper_blacklist'
+  BLACKLIST: 'leadsniper_blacklist',
+  REPLY_STYLE: 'leadsniper_reply_style',
+  DAILY_LIMIT: 'leadsniper_autopilot_daily_limit'
 };
 
 const $apiKey   = document.getElementById('apiKey');
@@ -33,9 +35,48 @@ const $autoPilotSwitch = document.getElementById('autoPilotSwitch');
 const $autoPilotThreshold = document.getElementById('autoPilotThreshold');
 const $thresholdVal = document.getElementById('thresholdVal');
 const $autoPilotLock = document.getElementById('autoPilotLock');
+const $scramBtn = document.getElementById('scramBtn');
+const $disclaimerModal = document.getElementById('disclaimerModal');
+const $acceptDisclaimerBtn = document.getElementById('acceptDisclaimerBtn');
+const $apiReplyStyle = document.getElementById('apiReplyStyle');
+const $autoPilotDailyLimit = document.getElementById('autoPilotDailyLimit');
+const $dailyLimitVal = document.getElementById('dailyLimitVal');
+const $lowThresholdWarning = document.getElementById('lowThresholdWarning');
+const $scramCooldownText = document.getElementById('scramCooldownText');
+
+let scramTimer = null;
+function startScramCountdown(cooldownTime) {
+  if (scramTimer) clearInterval(scramTimer);
+  
+  const updateTimer = () => {
+    const remaining = cooldownTime - Date.now();
+    if (remaining <= 0) {
+      clearInterval(scramTimer);
+      scramTimer = null;
+      if ($scramCooldownText) $scramCooldownText.style.display = 'none';
+      if ($scramBtn) $scramBtn.style.display = 'none';
+      refreshLicenseUI();
+    } else {
+      if ($scramCooldownText) {
+        $scramCooldownText.style.display = 'inline-block';
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        $scramCooldownText.textContent = `⏳ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+      if ($autoPilotSwitch) {
+        $autoPilotSwitch.checked = false;
+        $autoPilotSwitch.disabled = true;
+      }
+      if ($scramBtn) $scramBtn.style.display = 'none';
+    }
+  };
+  
+  updateTimer();
+  scramTimer = setInterval(updateTimer, 1000);
+}
 
 // Load values
-chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
+chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsniper_active', 'leadsniper_autohunter', 'leadsniper_scram_cooldown_until', 'leadsniper_disclaimer_accepted'], (result) => {
   $apiKey.value     = result[STORAGE_KEYS.API_KEY] || '';
   $licenseKey.value = result[STORAGE_KEYS.LICENSE] || '';
   $niche.value      = result[STORAGE_KEYS.NICHE]   || 'AI Automation and SaaS Growth';
@@ -44,6 +85,12 @@ chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
   if ($autoSync)   $autoSync.checked = result[STORAGE_KEYS.AUTO_SYNC] !== false; // default true
   if ($muteSoundSwitch) $muteSoundSwitch.checked = result[STORAGE_KEYS.MUTE_SOUND] === true;
   if ($blacklistKeywords) $blacklistKeywords.value = result[STORAGE_KEYS.BLACKLIST] || '';
+  if ($apiReplyStyle) $apiReplyStyle.value = result[STORAGE_KEYS.REPLY_STYLE] || 'Geek';
+  if ($autoPilotDailyLimit) {
+    const limit = result[STORAGE_KEYS.DAILY_LIMIT] || 15;
+    $autoPilotDailyLimit.value = limit;
+    if ($dailyLimitVal) $dailyLimitVal.textContent = limit;
+  }
   
   let endp = result[STORAGE_KEYS.ENDPOINT] || 'https://api.deepseek.com/chat/completions';
   if (endp.includes('openai.com')) endp = 'https://api.deepseek.com/chat/completions';
@@ -54,28 +101,36 @@ chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
   $apiModel.value = mod;
 
   // Master Switch state
-  chrome.storage.local.get('leadsniper_active', (res) => {
-    const isActive = res.leadsniper_active !== false; 
-    $masterSwitch.checked = isActive;
-    updateStatusDot(isActive);
-  });
+  const isActive = result.leadsniper_active !== false; 
+  $masterSwitch.checked = isActive;
+  updateStatusDot(isActive);
 
   // Auto-Hunter switch state
-  chrome.storage.local.get('leadsniper_autohunter', (res) => {
-    const isAutoHunter = res.leadsniper_autohunter === true;
-    if ($autoHunterSwitch) $autoHunterSwitch.checked = isAutoHunter;
-  });
+  const isAutoHunter = result.leadsniper_autohunter === true;
+  if ($autoHunterSwitch) $autoHunterSwitch.checked = isAutoHunter;
 
   // Auto-Pilot switch and threshold state
   refreshLicenseUI();
 });
 
 function refreshLicenseUI() {
-  chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier'], (res) => {
+  chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier', 'leadsniper_scram_cooldown_until'], (res) => {
     const isAutoPilot = res.leadsniper_autopilot === true;
     const threshold = res.leadsniper_autopilot_threshold || 85;
     const hasLicense = res.leadsniper_license_valid === true;
     const tier = res.leadsniper_license_tier || 'basic';
+    const cooldownUntil = res.leadsniper_scram_cooldown_until || 0;
+
+    if ($lowThresholdWarning) {
+      $lowThresholdWarning.style.display = threshold < 80 ? 'block' : 'none';
+    }
+
+    if (cooldownUntil > Date.now()) {
+      startScramCountdown(cooldownUntil);
+      return;
+    } else {
+      if ($scramCooldownText) $scramCooldownText.style.display = 'none';
+    }
 
     if ($autoPilotSwitch) {
       if (!hasLicense) {
@@ -86,6 +141,7 @@ function refreshLicenseUI() {
           $autoPilotLock.innerHTML = '🔒';
           $autoPilotLock.title = "Buy License to Unlock Auto-Pilot";
         }
+        if ($scramBtn) $scramBtn.style.display = 'none';
       } else if (tier === 'basic') {
         $autoPilotSwitch.checked = false;
         $autoPilotSwitch.disabled = true;
@@ -94,10 +150,12 @@ function refreshLicenseUI() {
           $autoPilotLock.innerHTML = '🔒 <span style="font-size: 8px; color: #ff2e4c; font-weight: bold; vertical-align: middle; text-decoration: underline;">UPGRADE</span>';
           $autoPilotLock.title = "Upgrade to Pro to Unlock Auto-Pilot";
         }
+        if ($scramBtn) $scramBtn.style.display = 'none';
       } else {
         $autoPilotSwitch.checked = isAutoPilot;
         $autoPilotSwitch.disabled = false;
         if ($autoPilotLock) $autoPilotLock.style.display = 'none';
+        if ($scramBtn) $scramBtn.style.display = isAutoPilot ? 'block' : 'none';
       }
     }
     if ($autoPilotThreshold) {
@@ -138,17 +196,102 @@ if ($muteSoundSwitch) {
 if ($autoPilotSwitch) {
   $autoPilotSwitch.addEventListener('change', () => {
     const active = $autoPilotSwitch.checked;
-    chrome.storage.local.set({ leadsniper_autopilot: active });
-    showToast(active ? '🛰️ AUTO-PILOT ON' : '💤 AUTO-PILOT OFF', !active);
+    if (active) {
+      chrome.storage.local.get('leadsniper_disclaimer_accepted', (res) => {
+        if (!res.leadsniper_disclaimer_accepted) {
+          $autoPilotSwitch.checked = false;
+          if ($disclaimerModal) $disclaimerModal.style.display = 'flex';
+        } else {
+          chrome.storage.local.set({ leadsniper_autopilot: true }, () => {
+            if ($scramBtn) $scramBtn.style.display = 'block';
+            showToast('🛰️ AUTO-PILOT ON', false);
+          });
+        }
+      });
+    } else {
+      chrome.storage.local.set({ leadsniper_autopilot: false }, () => {
+        if ($scramBtn) $scramBtn.style.display = 'none';
+        showToast('🛰️ AUTO-PILOT OFF', true);
+      });
+    }
+  });
+}
+
+if ($acceptDisclaimerBtn) {
+  $acceptDisclaimerBtn.addEventListener('click', () => {
+    chrome.storage.local.set({
+      leadsniper_disclaimer_accepted: true,
+      leadsniper_autopilot: true
+    }, () => {
+      if ($disclaimerModal) $disclaimerModal.style.display = 'none';
+      if ($autoPilotSwitch) {
+        $autoPilotSwitch.checked = true;
+        $autoPilotSwitch.disabled = false;
+      }
+      if ($scramBtn) $scramBtn.style.display = 'block';
+      showToast('🛰️ AUTO-PILOT ON', false);
+    });
+  });
+}
+
+if ($disclaimerModal) {
+  $disclaimerModal.addEventListener('click', (e) => {
+    if (e.target === $disclaimerModal) {
+      $disclaimerModal.style.display = 'none';
+      if ($autoPilotSwitch) $autoPilotSwitch.checked = false;
+    }
   });
 }
 
 if ($autoPilotThreshold) {
   $autoPilotThreshold.addEventListener('input', () => {
-    if ($thresholdVal) $thresholdVal.textContent = $autoPilotThreshold.value;
+    const val = parseInt($autoPilotThreshold.value, 10);
+    if ($thresholdVal) $thresholdVal.textContent = val;
+    if ($lowThresholdWarning) {
+      $lowThresholdWarning.style.display = val < 80 ? 'block' : 'none';
+    }
   });
   $autoPilotThreshold.addEventListener('change', () => {
     chrome.storage.local.set({ leadsniper_autopilot_threshold: parseInt($autoPilotThreshold.value, 10) });
+  });
+}
+
+if ($autoPilotDailyLimit) {
+  $autoPilotDailyLimit.addEventListener('input', () => {
+    if ($dailyLimitVal) $dailyLimitVal.textContent = $autoPilotDailyLimit.value;
+  });
+  $autoPilotDailyLimit.addEventListener('change', () => {
+    chrome.storage.local.set({ [STORAGE_KEYS.DAILY_LIMIT]: parseInt($autoPilotDailyLimit.value, 10) });
+  });
+}
+
+if ($apiReplyStyle) {
+  $apiReplyStyle.addEventListener('change', () => {
+    chrome.storage.local.set({ [STORAGE_KEYS.REPLY_STYLE]: $apiReplyStyle.value }, () => {
+      showToast('🎨 STYLE UPDATED: ' + $apiReplyStyle.value, false);
+    });
+  });
+}
+
+if ($scramBtn) {
+  $scramBtn.addEventListener('click', () => {
+    const cooldownDuration = 30 * 60 * 1000;
+    const cooldownTime = Date.now() + cooldownDuration;
+    
+    chrome.storage.local.set({
+      leadsniper_autopilot: false,
+      leadsniper_scram_cooldown_until: cooldownTime
+    }, () => {
+      if ($autoPilotSwitch) {
+        $autoPilotSwitch.checked = false;
+        $autoPilotSwitch.disabled = true;
+      }
+      if ($scramBtn) $scramBtn.style.display = 'none';
+      
+      chrome.runtime.sendMessage({ type: "SCRAM_KILL" });
+      startScramCountdown(cooldownTime);
+      showToast('🛑 EMERGENCY SCRAM TRIGGERED', true);
+    });
   });
 }
 
@@ -257,6 +400,8 @@ $saveBtn.addEventListener('click', async () => {
   const autoSync   = $autoSync ? $autoSync.checked : true;
   const blacklist  = $blacklistKeywords ? $blacklistKeywords.value.trim() : '';
   const muteSound  = $muteSoundSwitch ? $muteSoundSwitch.checked : false;
+  const style      = $apiReplyStyle ? $apiReplyStyle.value : 'Geek';
+  const dailyLimit = $autoPilotDailyLimit ? parseInt($autoPilotDailyLimit.value, 10) : 15;
 
   if (!apiKey || !niche) {
     showToast('❌ PLEASE FILL API KEY & NICHE', true);
@@ -294,7 +439,9 @@ $saveBtn.addEventListener('click', async () => {
     [STORAGE_KEYS.WEBHOOK]:   webhook,
     [STORAGE_KEYS.AUTO_SYNC]: autoSync,
     [STORAGE_KEYS.BLACKLIST]:  blacklist,
-    [STORAGE_KEYS.MUTE_SOUND]: muteSound
+    [STORAGE_KEYS.MUTE_SOUND]: muteSound,
+    [STORAGE_KEYS.REPLY_STYLE]: style,
+    [STORAGE_KEYS.DAILY_LIMIT]: dailyLimit
   }, () => {
     $saveBtn.textContent = origText;
     refreshLicenseUI();

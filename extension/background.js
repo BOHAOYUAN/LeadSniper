@@ -76,9 +76,12 @@ function enqueueRequest(fn) {
   });
 }
 
+let currentActiveController = null;
+
 async function fetchWithTimeout(resource, options = {}) {
   const { timeout = REQUEST_TIMEOUT } = options;
   const controller = new AbortController();
+  currentActiveController = controller;
   const id = setTimeout(() => controller.abort(), timeout);
   
   try {
@@ -89,6 +92,9 @@ async function fetchWithTimeout(resource, options = {}) {
     return response;
   } finally {
     clearTimeout(id);
+    if (currentActiveController === controller) {
+      currentActiveController = null;
+    }
   }
 }
 
@@ -159,6 +165,31 @@ async function verifyLicenseKey(licenseKey) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "SCRAM_KILL") {
+    console.log("[LeadSniper] SCRAM Stop triggered. Clearing request queue.");
+    requestQueue.length = 0;
+    activeRequests = 0;
+    if (currentActiveController) {
+      try {
+        currentActiveController.abort();
+        console.log("[LeadSniper] Active fetch request aborted.");
+      } catch (e) {
+        console.error("[LeadSniper] Error aborting fetch:", e);
+      }
+      currentActiveController = null;
+    }
+    // Propagate SCRAM to content scripts in tabs
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: "SCRAM_KILL" }).catch(() => {});
+        }
+      });
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (message.type === "ACTIVATE_EXT") {
     verifyLicenseKey(message.key).then(sendResponse);
     return true;
@@ -440,15 +471,27 @@ Output ONLY valid JSON:
 
 async function callAIEnrich(config, postText, profileData) {
   const valueProp = config['leadsniper_value_prop'] || "";
+  const style = config['leadsniper_reply_style'] || "Geek";
+  
+  let styleInstruction = "";
+  if (style === "Warm") {
+    styleInstruction = "Tone must be warm, supportive, helpful, and empathetic. Focus on building connection and solving problems collaboratively.";
+  } else if (style === "Executive") {
+    styleInstruction = "Tone must be professional, authoritative, executive-ready, and polished. Focus on business value, efficiency, ROI, and metrics.";
+  } else {
+    // Geek
+    styleInstruction = "Tone must be technical, engineering-focused, direct, logical, and highly concise (like Bill Gates discussing code/architecture). Avoid marketing jargon.";
+  }
+
   const prompt = `You are a tactical B2B outreach engineer writing high-converting tech replies.
 Post: "${postText}"
 Profile Bio: "${profileData.bio}"
 Company Info: "${profileData.company}"
 ${valueProp ? `Our Product Value Proposition: "${valueProp}"` : ''}
 
-CRITICAL STYLE MANUAL (GEEK/BILL-GATES STYLE):
+CRITICAL STYLE MANUAL:
 1. Keep replies strictly under 250 characters.
-2. Tone must be technical, engineering-focused, direct, logical, and highly concise (like Bill Gates discussing code/architecture).
+2. ${styleInstruction}
 3. Absolutely NO marketing fluff, NO generic sales pitch language, and NO emojis (do NOT use 🚀, ⚡, 🛰️, etc.).
 4. Use precise technical terminology. Treat the prospect as a fellow engineer/builder.
 5. Address their specific problem directly.

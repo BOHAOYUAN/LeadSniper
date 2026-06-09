@@ -193,6 +193,7 @@
         <div style="display: flex; align-items: center;">
           <label style="color: var(--neon-green); font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">🛰️ AUTO-PILOT MODE (SEMI-AUTO)</label>
           <span id="autoPilotLock" style="color: #ff2e4c; margin-left: 6px; cursor: pointer; font-size: 11px; display: inline-block;" title="Upgrade to Unlock Auto-Pilot">🔒</span>
+          <span id="scramCooldownText" style="display: none; color: #ff2e4c; font-size: 9px; font-weight: bold; margin-left: 8px; font-family: monospace;">⏳ 30:00</span>
         </div>
         <label class="switch">
           <input type="checkbox" id="autoPilotSwitch">
@@ -207,6 +208,22 @@
         </div>
         <input type="range" id="autoPilotThreshold" min="70" max="95" value="85" style="padding: 2px 0; background: transparent; accent-color: var(--neon-green); cursor: pointer; border: none;">
       </div>
+
+      <!-- Auto-Pilot Daily Limit Slider -->
+      <div id="dailyLimitContainer" style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="color: var(--text-dim); font-size: 9px; font-weight: bold; letter-spacing: 0.5px;">⏰ MAX DRAFTS / DAY: <span id="dailyLimitVal" style="color: var(--neon-green)">15</span></label>
+        </div>
+        <input type="range" id="autoPilotDailyLimit" min="5" max="50" value="15" style="padding: 2px 0; background: transparent; accent-color: var(--neon-green); cursor: pointer; border: none;">
+      </div>
+
+      <!-- Low Threshold Warning Alert Box -->
+      <div id="lowThresholdWarning" style="display: none; background: rgba(255, 152, 0, 0.05); border: 1px solid rgba(255, 152, 0, 0.3); padding: 6px 10px; border-radius: 4px; font-size: 9px; color: #ffb74d; line-height: 1.4; margin-top: 2px;">
+        ⚠️ <b>低阈值风险警告:</b> 评分阈值低于 80 会导致匹配过多帖子，大幅增加账号被平台限制或封禁的风险。建议保持在 80 以上。
+      </div>
+
+      <!-- Emergency SCRAM Button -->
+      <button id="scramBtn" style="display: none; width: 100%; border: 1px solid var(--accent); background: rgba(255,46,76,0.15); color: var(--accent); font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 10px; padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">🛑 EMERGENCY SCRAM (STOP)</button>
     </div>
 
     <div class="field-group">
@@ -231,6 +248,15 @@
     <div class="field-group">
       <label>TARGET NICHE & PAIN POINT (PROMPT)</label>
       <textarea id="niche" placeholder="e.g. B2B SaaS founders struggling with customer churn, seeking automation or growth tools..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>AI Reply Style (回复风格)</label>
+      <select id="apiReplyStyle" style="width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 8px 10px; outline: none; transition: border-color 0.3s;">
+        <option value="Geek">💻 Geek (极客技术流)</option>
+        <option value="Warm">🤝 Warm (温暖共情流)</option>
+        <option value="Executive">👔 Executive (高管专业流)</option>
+      </select>
     </div>
 
     <div class="field-group">
@@ -269,6 +295,11 @@
         <label style="color: var(--accent);">LOCAL KEYWORD BLACKLIST (COMMA SEPARATED)</label>
         <input type="text" id="blacklistKeywords" placeholder="e.g. crypto, airdrop, giveaway, freebie">
       </div>
+      <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 9px; color: var(--text-dim); line-height: 1.4;">
+        🛡️ <b>Advanced Safety Tips:</b><br>
+        • 定期在浏览器隐私窗口 (Incognito) 下检查个人社交主页，确认评论是否对未登录用户正常可见（影子封禁检测）。<br>
+        • 建议搭配 AdsPower / Multilogin 等反指纹浏览器运行本插件，或者关闭 WebGL 暴露，以防平台追踪设备指纹识别为非正常用户。
+      </div>
     </details>
 
     <button class="btn-save" id="saveBtn">⚡ INITIALIZE SYSTEM</button>
@@ -281,6 +312,20 @@
     </div>
   </div>
   <div class="toast" id="toast">✅ SYSTEM SYNCED</div>
+
+  <!-- Disclaimer Modal -->
+  <div id="disclaimerModal" style="display: none; position: fixed; inset: 0; background: rgba(5,5,10,0.96); z-index: 100000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; padding: 25px; max-width: 340px; box-shadow: var(--glow); text-align: center; position: relative;">
+      <div style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 46, 76, 0.01) 2px, rgba(255, 46, 76, 0.01) 4px); pointer-events: none; border-radius: 8px;"></div>
+      <div style="color: var(--accent); font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px;">⚠️ LEGAL LIABILITY PROTOCOL</div>
+      <p style="font-size: 11px; color: #fff; line-height: 1.6; text-align: left; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">
+        Auto-Pilot generated responses are drafted entirely by AI based on social post contexts.
+        <br><br>
+        By enabling Auto-Pilot, you agree that <b>you will manually review all drafts</b> before sending. You bear full legal and ethical responsibility for any content sent from your accounts.
+      </p>
+      <button id="acceptDisclaimerBtn" class="btn-save" style="border-color: var(--neon-green); color: var(--neon-green); font-size: 11px; padding: 8px 16px; letter-spacing: 1px; width: auto; display: inline-block; margin: 0 auto;">I ACCEPT & UNDERSTAND</button>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>
