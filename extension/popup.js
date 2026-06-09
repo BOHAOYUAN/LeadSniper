@@ -30,6 +30,12 @@ const $testConnBtn = document.getElementById('testConnBtn');
 const $toast = document.getElementById('toast');
 const $statusDot = document.getElementById('statusDot');
 
+const $basicTierPill = document.getElementById('basicTierPill');
+const $proTierPill = document.getElementById('proTierPill');
+const $proLockIcon = document.getElementById('proLockIcon');
+const $scarcityBadge = document.getElementById('scarcityBadge');
+const $seatsLeft = document.getElementById('seatsLeft');
+
 const $autoPilotThreshold = document.getElementById('autoPilotThreshold');
 const $thresholdVal = document.getElementById('thresholdVal');
 const $autoPilotLock = document.getElementById('autoPilotLock');
@@ -164,6 +170,11 @@ function refreshLicenseUI() {
     const $seatsBadge = document.getElementById('seatsBadge');
     const $upgradeBtn = document.getElementById('upgradeBtn');
 
+    if ($basicTierPill) $basicTierPill.classList.remove('active');
+    if ($proTierPill) $proTierPill.classList.remove('active');
+    if ($proLockIcon) $proLockIcon.style.display = 'inline';
+    if ($scarcityBadge) $scarcityBadge.style.display = 'block';
+
     if (!hasLicense) {
       if ($modePilotBtn) $modePilotBtn.classList.remove('active');
       if ($autoPilotLock) $autoPilotLock.style.display = 'inline';
@@ -182,6 +193,8 @@ function refreshLicenseUI() {
         $autoPilotLock.title = "Upgrade to Pro to unlock Auto-Pilot";
       }
       if ($scramBtn) $scramBtn.style.display = 'none';
+
+      if ($basicTierPill) $basicTierPill.classList.add('active');
 
       if ($tierBadgeText) $tierBadgeText.textContent = "LTD BASIC ($199)";
       if ($seatsBadge) $seatsBadge.innerHTML = `<i class="fas fa-star-half-alt"></i> Basic Enabled`;
@@ -203,9 +216,13 @@ function refreshLicenseUI() {
         else $modeHunterBtn.classList.remove('active');
       }
 
+      if ($proTierPill) $proTierPill.classList.add('active');
+      if ($proLockIcon) $proLockIcon.style.display = 'none';
+      if ($scarcityBadge) $scarcityBadge.style.display = 'none';
+
       if ($scramBtn) $scramBtn.style.display = isAutoPilot ? 'block' : 'none';
 
-      if ($tierBadgeText) $tierBadgeText.textContent = "LTD PRO ($99)";
+      if ($tierBadgeText) $tierBadgeText.textContent = "LTD PRO ($588)";
       if ($seatsBadge) $seatsBadge.innerHTML = `<i class="fas fa-star"></i> Elite Pro Active`;
       if ($upgradeBtn) $upgradeBtn.style.display = 'none';
     }
@@ -415,6 +432,28 @@ const buyLicenseBtn = document.getElementById('buyLicenseBtn');
 if (buyLicenseBtn) {
   buyLicenseBtn.addEventListener('click', () => {
     window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
+  });
+}
+
+if ($proTierPill) {
+  $proTierPill.addEventListener('click', () => {
+    chrome.storage.local.get(['leadsniper_license_tier'], (res) => {
+      const tier = res.leadsniper_license_tier;
+      if (tier !== 'pro') {
+        window.open('https://checkout.dodopayments.com/buy/pdt_0NgefvmouwvkPJZIU4slr?quantity=1', '_blank');
+      }
+    });
+  });
+}
+
+if ($basicTierPill) {
+  $basicTierPill.addEventListener('click', () => {
+    chrome.storage.local.get(['leadsniper_license_valid'], (res) => {
+      const hasLicense = res.leadsniper_license_valid === true;
+      if (!hasLicense) {
+        window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
+      }
+    });
   });
 }
 

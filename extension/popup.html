@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>LeadSniper Command Center</title>
-  <!-- Google Fonts + Font Awesome 6 -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Google Fonts & Font Awesome 6 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     * {
@@ -15,53 +15,53 @@
     }
 
     body {
-      background: #F1F5F9;
+      background: #FFFFFF;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      align-items: flex-start;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      padding: 0;
       width: 380px;
     }
 
-    /* Scrollable Container suitable for Chrome extension popups */
-    .plugin-container {
+    /* Extension Card Container */
+    .leadsniper-card {
       width: 380px;
       background: #FFFFFF;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
 
-    .scrollable-content {
+    .scroll-area {
       max-height: 580px;
       overflow-y: auto;
       padding: 16px;
       scrollbar-width: thin;
     }
 
-    .scrollable-content::-webkit-scrollbar {
+    .scroll-area::-webkit-scrollbar {
       width: 5px;
     }
-
-    .scrollable-content::-webkit-scrollbar-track {
-      background: #E9EEF3;
+    .scroll-area::-webkit-scrollbar-track {
+      background: #EDF2F7;
       border-radius: 10px;
     }
-
-    .scrollable-content::-webkit-scrollbar-thumb {
+    .scroll-area::-webkit-scrollbar-thumb {
       background: #CBD5E1;
       border-radius: 10px;
     }
 
-    /* Header styling */
-    .header {
+    /* Top Bar Header */
+    .top-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
-      gap: 8px;
+      width: 100%;
     }
 
     .logo-area {
@@ -73,13 +73,13 @@
     .badge-logo {
       background: #0F172A;
       color: white;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 13px;
       padding: 5px 10px;
       border-radius: 40px;
       letter-spacing: -0.2px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      display: flex;
+      display: inline-flex;
       align-items: center;
     }
 
@@ -153,51 +153,73 @@
       transform: translateX(13px);
     }
 
-    .tier-badge-container {
+    .tier-badge {
+      background: #FEF9E6;
+      border-radius: 12px;
+      padding: 8px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(135deg, #FEF9E6 0%, #FFF6E0 100%);
-      padding: 6px 12px;
-      border-radius: 12px;
-      margin-bottom: 12px;
+      border: 1px solid #FDE68A;
       font-size: 11px;
       font-weight: 600;
-      border: 1px solid #FEF3C7;
+      width: 100%;
     }
 
-    .tier-pro {
+    .tier-name {
       color: #B45309;
       background: #FFEDD5;
       padding: 2px 8px;
       border-radius: 30px;
       font-size: 10px;
       font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    .upgrade-btn {
+    .badge-basic {
+      font-size: 10px;
+      font-weight: 700;
+      color: #92400E;
+      background: #FEF3C7;
+      padding: 2px 8px;
+      border-radius: 30px;
+    }
+
+    .upgrade-link {
       background: none;
       border: none;
-      color: #F97316;
       font-weight: 700;
       font-size: 10px;
+      color: #EA580C;
       cursor: pointer;
-      display: flex;
+      transition: 0.2s;
+      display: inline-flex;
       align-items: center;
       gap: 3px;
     }
 
+    .secure-storage {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748B;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     /* Cards */
-    .card-section {
+    .card-panel {
       background: #FFFFFF;
-      border: 1px solid #E9EDF2;
+      border: 1px solid #EFF3F8;
       border-radius: 16px;
       padding: 14px;
       margin-bottom: 12px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
 
-    .section-title {
+    .panel-title {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
@@ -209,8 +231,8 @@
       gap: 6px;
     }
 
-    /* Segmented Control Mode Switcher */
-    .mode-switch-group {
+    /* Mode Switcher Segmented Control */
+    .mode-switch {
       display: flex;
       gap: 8px;
       background: #F8FAFE;
@@ -220,7 +242,7 @@
       margin-bottom: 10px;
     }
 
-    .mode-option {
+    .mode-item {
       flex: 1;
       text-align: center;
       padding: 8px 4px;
@@ -232,19 +254,17 @@
       background: transparent;
       color: #5A6E8C;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 4px;
     }
 
-    .mode-option.active {
+    .mode-item.active {
       background: #FFFFFF;
       color: #1E3A8A;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 1px #E2E8F0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px #E2E8F0;
     }
 
-    /* Toggle Checkbox style matching B2B theme */
     .checkbox-switch {
       position: relative;
       display: inline-block;
@@ -290,30 +310,29 @@
       transform: translateX(14px);
     }
 
-    /* Slider / Steppers */
-    .setting-row {
+    .row-flex {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
       gap: 8px;
+      margin-bottom: 12px;
     }
 
-    .label-icon {
-      font-weight: 600;
-      font-size: 11px;
-      color: #1F2A44;
+    .label-with-icon {
       display: flex;
       align-items: center;
       gap: 6px;
+      font-weight: 600;
+      font-size: 11px;
+      color: #1F2A44;
     }
 
     .slider-value {
       background: #F1F5F9;
       padding: 2px 8px;
       border-radius: 30px;
-      font-size: 11px;
       font-weight: 700;
+      font-size: 11px;
       color: #2563EB;
     }
 
@@ -324,12 +343,12 @@
       cursor: pointer;
     }
 
-    .draft-progress {
-      background: #EFF3F8;
-      border-radius: 30px;
+    .progress-container {
+      background: #EDF2F7;
+      border-radius: 1rem;
       height: 6px;
       width: 100%;
-      margin-top: 8px;
+      margin: 8px 0 4px;
       overflow: hidden;
     }
 
@@ -337,72 +356,78 @@
       background: #2563EB;
       width: 0%;
       height: 6px;
-      border-radius: 30px;
+      border-radius: 1rem;
       transition: width 0.3s ease;
     }
 
-    /* inputs & buttons */
-    .license-area {
+    .used-stats {
+      font-size: 10px;
+      color: #5B6E8C;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    /* License Row styling */
+    .license-row {
       display: flex;
       gap: 8px;
       margin-bottom: 10px;
     }
 
-    .license-input {
+    .input-outline {
       flex: 1;
       background: #F9FBFE;
       border: 1px solid #E2E8F0;
       border-radius: 8px;
       padding: 8px 12px;
       font-size: 11px;
-      color: #334155;
       outline: none;
       transition: border-color 0.2s;
       font-family: 'Inter', sans-serif;
+      color: #334155;
     }
 
-    .license-input:focus {
+    .input-outline:focus {
       border-color: #2563EB;
       background: #ffffff;
     }
 
-    .btn-primary {
+    .btn-primary-sm {
       background: #1E3A8A;
       color: white;
       border: none;
       border-radius: 8px;
-      padding: 8px 16px;
+      padding: 0 16px;
       font-weight: 600;
+      font-size: 11px;
       cursor: pointer;
       transition: background 0.2s;
-      font-size: 11px;
       font-family: 'Inter', sans-serif;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
     }
 
-    .btn-primary:hover {
+    .btn-primary-sm:hover {
       background: #1E40AF;
     }
 
-    .btn-outline {
+    .btn-outline-sm {
       background: transparent;
       border: 1px solid #CBD5E1;
       border-radius: 8px;
       padding: 6px 12px;
       font-weight: 600;
-      cursor: pointer;
       font-size: 11px;
-      transition: all 0.2s;
+      cursor: pointer;
       color: #475569;
+      transition: all 0.2s;
     }
 
-    .btn-outline:hover {
+    .btn-outline-sm:hover {
       background: #F1F5F9;
       border-color: #94A3B8;
     }
 
+    /* Textarea */
     textarea {
       width: 100%;
       border: 1px solid #E2E8F0;
@@ -410,8 +435,8 @@
       padding: 10px;
       font-size: 11px;
       font-family: 'Inter', sans-serif;
-      resize: vertical;
       background: #FEFEFE;
+      resize: vertical;
       outline: none;
       transition: border-color 0.2s;
       color: #334155;
@@ -422,8 +447,8 @@
       border-color: #2563EB;
     }
 
-    /* Style Tags Selector */
-    .tag-group {
+    /* Styles Group tag */
+    .style-group {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
@@ -452,52 +477,36 @@
       box-shadow: 0 2px 4px rgba(30, 58, 138, 0.15);
     }
 
-    /* Caveats */
+    .webhook-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
     .safety-note {
       background: #FEFCE8;
       border-left: 3px solid #EAB308;
       padding: 10px;
       border-radius: 8px;
       font-size: 10px;
-      color: #4B5563;
       line-height: 1.4;
       margin-top: 8px;
+      color: #4B5563;
     }
 
-    /* Action Buttons Footer */
-    .action-buttons {
+    /* Main Actions */
+    .action-group {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 14px;
+      margin-top: 8px;
     }
 
-    .btn-launch {
-      background: #0F172A;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 12px;
-      gap: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
-      width: 100%;
-    }
-
-    .btn-launch:hover {
-      background: #1E293B;
-    }
-
-    .btn-secondary {
+    .btn-ghost {
       background: white;
       border: 1px solid #CBD5E1;
-      padding: 8px;
       border-radius: 8px;
+      padding: 8px;
       font-weight: 600;
       font-size: 11px;
       color: #334155;
@@ -510,17 +519,75 @@
       width: 100%;
     }
 
-    .btn-secondary:hover {
+    .btn-ghost:hover {
       background: #F1F5F9;
     }
 
-    footer {
-      font-size: 9px;
+    .btn-solid {
+      background: #2563EB;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      gap: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn-solid:hover {
+      background: #1D4ED8;
+    }
+
+    /* Tier pill & Scarcity styling */
+    .tier-pill {
+      flex: 1;
       text-align: center;
-      margin-top: 14px;
+      padding: 8px 4px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid #CBD5E1;
+      color: #64748B;
+      background: #F1F5F9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .tier-pill.active {
+      background: #1E3A8A !important;
+      color: white !important;
+      border-color: #1E3A8A !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .scarcity-badge {
+      background: #FEF3C7;
+      border-left: 3px solid #F59E0B;
+      font-size: 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #B45309;
+      text-align: center;
+      width: 100%;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 9px;
       color: #94A3B8;
       border-top: 1px solid #ECF3F9;
       padding-top: 10px;
+      margin-top: 14px;
       line-height: 1.4;
     }
 
@@ -549,52 +616,76 @@
   </style>
 </head>
 <body>
-<div class="plugin-container">
-  <div class="scrollable-content">
-    <!-- Header -->
-    <div class="header">
-      <div class="logo-area">
-        <div class="badge-logo"><i class="fas fa-bullseye" style="margin-right: 6px;"></i>LeadSniper 3.0</div>
-        <div class="scan-status">
-          <span class="pulse-dot" id="statusDot"></span>
-          <span style="margin-right: 4px;">SCANNING</span>
-          <label class="switch-mini">
-            <input type="checkbox" id="masterSwitch" checked>
-            <span class="slider-mini"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Tier badge -->
-    <div class="tier-badge-container">
-      <span><i class="fas fa-crown" style="color: #F59E0B;"></i> TIER: <span id="tierBadgeText">LTD PRO ($99)</span></span>
-      <span class="tier-pro" id="seatsBadge"><i class="fas fa-chair"></i> 50 founding seats left</span>
-      <button class="upgrade-btn" id="upgradeBtn" style="display:none;">UPGRADE <i class="fas fa-arrow-right"></i></button>
-    </div>
-
-    <!-- Automation Modes Card -->
-    <div class="card-section">
-      <div class="section-title"><i class="fas fa-robot"></i> 运行模式</div>
-      <div class="mode-switch-group">
-        <div class="mode-option" data-mode="hunter" id="modeHunterBtn">
-          <i class="fas fa-search"></i> AUTO-HUNTER<br><span style="font-size: 8px;">(SCROLL BOT)</span>
-        </div>
-        <div class="mode-option" data-mode="pilot" id="modePilotBtn">
-          <i class="fas fa-plane"></i> AUTO-PILOT <span id="autoPilotLock" style="color: #ef4444; font-size: 10px; display: none;">🔒</span><br><span style="font-size: 8px;">(SEMI-AUTO)</span>
+<div class="leadsniper-card">
+  <div class="scroll-area">
+    <!-- Header: Tier + Security Indicators -->
+    <div class="top-bar">
+      <div class="header-row">
+        <div class="logo-area">
+          <div class="badge-logo"><i class="fas fa-bullseye" style="margin-right: 6px;"></i>LeadSniper 3.0</div>
+          <div class="scan-status">
+            <span class="pulse-dot" id="statusDot"></span>
+            <span style="margin-right: 4px;">SCANNING</span>
+            <label class="switch-mini">
+              <input type="checkbox" id="masterSwitch" checked>
+              <span class="slider-mini"></span>
+            </label>
+          </div>
         </div>
       </div>
       
-      <!-- Cooldown timer & emergency stop inside the mode card -->
-      <div class="flex-between" style="margin-top: 8px;">
-        <span class="label-icon"><i class="fas fa-volume-mute"></i> MUTE SOUND ALERT</span>
+      <div class="tier-badge-container" style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 8px 0 4px;">
+        <!-- Basic vs Pro Side-by-Side Comparison Pills -->
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <div class="tier-pill active" id="basicTierPill">
+            <span style="font-weight: 800; font-size: 11px;">🔓 BASIC ($199)</span>
+            <span style="font-size: 8px; opacity: 0.85;">Auto-Hunter Mode</span>
+          </div>
+          <div class="tier-pill" id="proTierPill">
+            <span style="font-weight: 800; font-size: 11px;"><span id="proLockIcon" style="margin-right: 2px;">🔒</span>PRO ($588)</span>
+            <span style="font-size: 8px; opacity: 0.85;">Auto-Pilot + Unlimited</span>
+          </div>
+        </div>
+
+        <!-- Scarcity Badge -->
+        <div id="scarcityBadge" class="scarcity-badge" style="display: none;">
+          🔥 LTD PRO Upgrade: Only <span id="seatsLeft" style="font-weight: 800;">7</span> lifetime seats left!
+        </div>
+      </div>
+
+      <!-- Hidden legacy elements to keep existing popup.js code functional -->
+      <div class="tier-badge" style="display: none;">
+        <span id="tierBadgeText">FREE TRIAL</span>
+        <span id="seatsBadge">Basic Enabled</span>
+        <button class="upgrade-link" id="upgradeBtn">UPGRADE</button>
+      </div>
+
+      <div class="secure-storage">
+        <i class="fas fa-database"></i> 100% secure local storage (BYOK)
+      </div>
+    </div>
+
+    <!-- Running Modes -->
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-gamepad"></i> Running Mode</div>
+      <div class="mode-switch">
+        <div class="mode-item" data-mode="hunter" id="modeHunterBtn">
+          <i class="fas fa-robot"></i> AUTO-HUNTER <span style="font-size: 0.6rem;">(SCROLL BOT)</span>
+        </div>
+        <div class="mode-item" data-mode="pilot" id="modePilotBtn">
+          <i class="fas fa-plane"></i> AUTO-PILOT <span id="autoPilotLock" style="color: #ef4444; font-size: 10px; display: none;">🔒</span> <span style="font-size: 0.6rem;">(SEMI-AUTO)</span>
+        </div>
+      </div>
+      
+      <div class="row-flex" style="margin-top: 8px;">
+        <label class="label-with-icon"><i class="fas fa-volume-mute"></i> MUTE SOUND ALERT</label>
         <label class="checkbox-switch">
           <input type="checkbox" id="muteSoundSwitch">
           <span class="checkbox-slider"></span>
         </label>
       </div>
 
-      <!-- Emergency SCRAM action -->
+      <!-- Emergency SCRAM Controls -->
       <div style="margin-top: 10px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span id="scramCooldownText" style="display: none; color: #ef4444; font-size: 10px; font-weight: bold; font-family: monospace; animation: pulse 1.5s infinite;"><i class="fas fa-hourglass-half"></i> ⏳ 30:00</span>
@@ -603,127 +694,127 @@
       </div>
     </div>
 
-    <!-- Parameters Configuration Card -->
-    <div class="card-section">
-      <div class="section-title"><i class="fas fa-sliders-h"></i> 过滤与限制</div>
-      
-      <div class="setting-row">
-        <span class="label-icon"><i class="fas fa-chart-line"></i> AUTO-FILL SCORE THRESHOLD</span>
+    <!-- Filters & Limits: Threshold + Stepper Daily Limits -->
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-filter"></i> Filters & Limits</div>
+      <div class="row-flex">
+        <span class="label-with-icon"><i class="fas fa-chart-line"></i> AUTO-FILL SCORE THRESHOLD</span>
         <span class="slider-value" id="thresholdVal">85</span>
       </div>
       <input type="range" id="autoPilotThreshold" min="70" max="95" value="85" step="1">
-
+      
       <div id="lowThresholdWarning" style="display: none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 8px; border-radius: 8px; font-size: 10px; color: #B45309; line-height: 1.4; margin-top: 8px;">
-        ⚠️ <b>低阈值警告:</b> 评分设置低于 80 会触发更多自动化操作，这会显著增加被平台检测封号的风险。
+        ⚠️ <b>Low Threshold Warning:</b> Setting the threshold below 80 matches too many posts, significantly increasing account flag risks on LinkedIn or X.
       </div>
 
-      <div class="setting-row" style="margin-top: 14px;">
-        <span class="label-icon"><i class="fas fa-paper-plane"></i> MAX DRAFTS / DAY</span>
+      <div class="row-flex" style="margin-top: 12px;">
+        <span class="label-with-icon"><i class="fas fa-file-alt"></i> MAX DRAFTS / DAY</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="decDrafts" class="btn-outline" style="padding: 2px 8px; font-size: 12px; font-weight: bold;">-</button>
-          <span id="draftsCount" style="font-weight: 700; font-size: 12px; min-width: 20px; text-align: center;">15</span>
-          <button id="incDrafts" class="btn-outline" style="padding: 2px 8px; font-size: 12px; font-weight: bold;">+</button>
+          <button id="decDrafts" class="btn-outline-sm" style="padding: 2px 8px; font-size: 12px; font-weight: bold;">−</button>
+          <span id="draftsCount" style="font-weight: 800; min-width: 20px; text-align: center;">15</span>
+          <button id="incDrafts" class="btn-outline-sm" style="padding: 2px 8px; font-size: 12px; font-weight: bold;">+</button>
         </div>
       </div>
-      <div class="draft-progress">
+      <div class="progress-container">
         <div class="progress-fill" id="draftProgressFill"></div>
       </div>
-      <div class="flex-between" style="margin-top: 6px; font-size: 10px; color: #64748B;">
-        <span><i class="far fa-clock"></i> Used today: <span id="usedDraftsSpan">0</span>/<span id="maxDraftsSpan">15</span></span>
+      <div class="used-stats">
+        <span><i class="far fa-calendar-alt"></i> Used today: <span id="usedDraftsSpan">0</span>/<span id="maxDraftsSpan">15</span></span>
         <span><i class="fas fa-sync-alt"></i> Resets daily</span>
       </div>
     </div>
 
     <!-- Credentials and Keys Management -->
-    <div class="card-section">
-      <div class="section-title"><i class="fas fa-key"></i> 授权与模型</div>
-      <div class="license-area">
-        <input type="password" class="license-input" placeholder="LICENSE KEY (DODO PAYMENTS)" id="licenseKey">
-        <button class="btn-primary" id="buyLicenseBtn" style="padding: 0 12px; font-size: 10px;">BUY</button>
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-key"></i> Authorization & Model</div>
+      <div class="license-row">
+        <input type="password" class="input-outline" id="licenseKey" placeholder="LICENSE KEY (DODO Payments)">
+        <button class="btn-primary-sm" id="buyLicenseBtn">BUY</button>
       </div>
-      <div class="license-area">
-        <input type="password" class="license-input" placeholder="DeepSeek / OpenAI API Key" id="apiKey">
-        <button class="btn-outline" id="testConnBtn" style="padding: 6px 12px;">TEST</button>
+      <div class="license-row">
+        <input type="password" class="input-outline" id="apiKey" placeholder="DeepSeek / OpenAI API Key">
+        <button class="btn-outline-sm" id="testConnBtn">Test</button>
       </div>
-      <div class="flex-between" style="font-size: 10px; color: #64748B;">
-        <span><i class="fas fa-shield-alt" style="color: #10B981;"></i> Secure local storage</span>
+      <div class="label-with-icon" style="justify-content: space-between; font-size: 10px; color: #64748B;">
+        <span><i class="fas fa-shield-alt" style="color: #10B981;"></i> Local Secure Storage (BYOK)</span>
       </div>
     </div>
 
-    <!-- Targeting Niche & Products Proposition -->
-    <div class="card-section">
-      <div class="section-title"><i class="fas fa-bullhorn"></i> 客户画像与产品定位</div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div>
-          <span class="label-icon" style="margin-bottom: 6px;"><i class="fas fa-users"></i> TARGET NICHE & PAIN POINT</span>
-          <textarea rows="3" id="niche" placeholder="e.g. B2B SaaS founders struggling with customer churn, seeking growth tools..."></textarea>
-        </div>
-        <div>
-          <span class="label-icon" style="margin-bottom: 6px;"><i class="fas fa-gem"></i> YOUR VALUE PROPOSITION</span>
-          <textarea rows="3" id="valueProp" placeholder="e.g. LeadSniper: A browser-native B2B intent tracking tool that captures leads and generates auto-replies..."></textarea>
-        </div>
-        <div>
-          <span class="label-icon"><i class="fas fa-comment-dots"></i> AI REPLY STYLE</span>
-          <div class="tag-group" id="styleGroup">
-            <span class="style-tag active" data-style="Geek">💻 Geek</span>
-            <span class="style-tag" data-style="Warm">🤝 Warm</span>
-            <span class="style-tag" data-style="Executive">👔 Executive</span>
-          </div>
-        </div>
+    <!-- Targeting Niche & Value Proposition -->
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-chart-simple"></i> Customer Profiling & Positioning</div>
+      <label class="label-with-icon" style="margin-bottom: 6px;"><i class="fas fa-users"></i> TARGET NICHE & PAIN POINT</label>
+      <textarea rows="3" id="niche" placeholder="e.g. B2B SaaS founders struggling with customer churn, seeking growth tools..."></textarea>
+      
+      <div class="panel-title" style="margin-top: 14px;"><i class="fas fa-bullhorn"></i> YOUR VALUE PROPOSITION</div>
+      <textarea rows="3" id="valueProp" placeholder="e.g. LeadSniper: A browser-native B2B social intent tracking tool that captures leads and generates auto-replies..."></textarea>
+      
+      <div style="background: #F8FAFE; border-radius: 12px; padding: 10px; font-size: 10px; line-height: 1.4; margin-top: 10px; border: 1px solid #E9EDF2; color: #475569;">
+        <i class="fas fa-globe"></i> Website: <a href="https://bohaoyuan.github.io/LeadSniper" target="_blank" style="color: #2563EB; text-decoration: none; font-weight: 600;">bohaoyuan.github.io/LeadSniper</a>
+      </div>
+    </div>
+
+    <!-- AI REPLY STYLE tags selection -->
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-comment-dots"></i> AI Reply Style</div>
+      <div class="style-group" id="styleGroup">
+        <span class="style-tag active" data-style="Geek">💻 Geek</span>
+        <span class="style-tag" data-style="Warm">🤝 Warm</span>
+        <span class="style-tag" data-style="Executive">👔 Executive</span>
       </div>
     </div>
 
     <!-- Cloud Synchronization Webhook -->
-    <div class="card-section">
-      <div class="section-title"><i class="fas fa-cloud-upload-alt"></i> 云端 CRM 同步</div>
-      <div class="license-area" style="margin-bottom: 8px;">
-        <input type="text" class="license-input" placeholder="Webhook URL (Notion/Make/Zapier)" id="webhookUrl">
+    <div class="card-panel">
+      <div class="panel-title"><i class="fas fa-cloud-upload-alt"></i> Cloud CRM Synchronization</div>
+      <div class="webhook-row">
+        <input type="url" class="input-outline" id="webhookUrl" placeholder="https://api.yourcrm.com/v1/leads">
         <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; color: #475569; font-weight: 600;">
           <input type="checkbox" id="autoSyncWebhook" checked> Auto
         </label>
       </div>
-      
       <div class="safety-note">
-        <i class="fas fa-shield-alt"></i> <strong>人机协同安全提醒:</strong><br>
-        本插件采用人机协同工作机制。AI 生成的回复会自动输入或复制，但<b>绝不自动发送</b>，必须由您手动确认点击发送，从而规避平台的封号算法。
+        <i class="fas fa-shield-heart" style="color: #EAB308;"></i> <strong>Human Co-pilot Safety Protocol:</strong><br>
+        LeadSniper operates as a human-AI co-pilot. Generated drafts are either automatically typed or copied to the clipboard, but <b>never automatically sent</b>. You retain final control over when to send, safely bypassing platform automated anti-bot filters.
       </div>
     </div>
 
-    <!-- Collapsible Advanced Configurations -->
+    <!-- Advanced Collapsible Section & Actions -->
     <details style="margin-bottom: 12px; background: #F9FCFE; border-radius: 12px; padding: 6px 10px; border: 1px solid #EDF2F7;">
       <summary style="font-weight: 700; font-size: 11px; cursor: pointer; color: #2C3E66; list-style: none; display: flex; align-items: center; gap: 4px;">
         <i class="fas fa-cog"></i> ADVANCED CONFIGURATIONS <i class="fas fa-chevron-down" style="font-size: 8px; margin-left: auto;"></i>
       </summary>
       <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
         <div>
-          <label class="label-icon" style="margin-bottom: 3px;">BASE URL (ENDPOINT)</label>
-          <input type="text" class="license-input" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
+          <label class="label-with-icon" style="margin-bottom: 3px;">BASE URL (ENDPOINT)</label>
+          <input type="text" class="input-outline" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
         </div>
         <div>
-          <label class="label-icon" style="margin-bottom: 3px;">MODEL</label>
-          <input type="text" class="license-input" id="apiModel" placeholder="deepseek-chat">
+          <label class="label-with-icon" style="margin-bottom: 3px;">MODEL</label>
+          <input type="text" class="input-outline" id="apiModel" placeholder="deepseek-chat">
         </div>
         <div>
-          <label class="label-icon" style="margin-bottom: 3px; color: #EF4444;">LOCAL KEYWORD BLACKLIST</label>
-          <input type="text" class="license-input" id="blacklistKeywords" placeholder="crypto, airdrop, giveaway">
+          <label class="label-with-icon" style="margin-bottom: 3px; color: #EF4444;">LOCAL KEYWORD BLACKLIST</label>
+          <input type="text" class="input-outline" id="blacklistKeywords" placeholder="crypto, airdrop, giveaway">
         </div>
         <div style="border-top: 1px solid #E2E8F0; padding-top: 8px; font-size: 9px; color: #64748B; line-height: 1.4;">
           🛡️ <b>Advanced Safety Tips:</b><br>
-          • 建议定期用无痕浏览器窗口检测社交账号的回复是否对游客正常可见（防止影子封禁 Shadow Ban）。<br>
-          • 生产环境建议搭配 AdsPower、Multilogin 等防关联浏览器运行，或屏蔽 WebGL 指纹防止浏览器被识别。
+          • Regularly check your social profile replies inside an Incognito window to verify if they are visible to public users (Shadow Ban check).<br>
+          • It is highly recommended to use anti-fingerprint browsers (like AdsPower or Multilogin) or block WebGL expose tags to prevent hardware fingerprint checks.
         </div>
       </div>
     </details>
 
-    <!-- Main System Actions -->
-    <div class="action-buttons">
-      <button class="btn-secondary" id="saveBtn"><i class="fas fa-save"></i> INITIALIZE SYSTEM</button>
-      <button class="btn-secondary" id="intentSearchBtn"><i class="fas fa-search"></i> LAUNCH INTENT SEARCH</button>
-      <button class="btn-launch" id="openSidepanelBtn"><i class="fas fa-globe"></i> OPEN 3D RADAR</button>
+    <div class="card-panel" style="border: none; padding: 0; box-shadow: none;">
+      <div class="action-group">
+        <button class="btn-ghost" id="saveBtn"><i class="fas fa-save"></i> INITIALIZE SYSTEM</button>
+        <button class="btn-solid" id="intentSearchBtn"><i class="fas fa-search"></i> LAUNCH INTENT SEARCH</button>
+        <button class="btn-ghost" id="openSidepanelBtn"><i class="fas fa-chart-line"></i> OPEN 3D RADAR</button>
+      </div>
     </div>
 
     <footer>
-      🤖 Digital Employee Interface · Native B2B intent radar · Powered by HY Digital Studio
+      <i class="fas fa-cogs"></i> Digital Employee Interface · Native B2B intent radar · Powered by HY Digital Studio
     </footer>
   </div>
 </div>
@@ -732,7 +823,7 @@
 
 <!-- Disclaimer Modal -->
 <div id="disclaimerModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 100000; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #ffffff; border-radius: 24px; padding: 28px; max-width: 340px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); text-align: center;">
+  <div style="background: #ffffff; border-radius: 24px; padding: 28px; max-width: 340px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); text-align: center;">
     <div style="color: #ef4444; font-size: 24px; margin-bottom: 12px;"><i class="fas fa-gavel"></i></div>
     <h3 style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 12px; font-family: 'Inter', sans-serif;">LEGAL LIABILITY AGREEMENT</h3>
     <p style="font-size: 12px; color: #64748b; line-height: 1.6; text-align: left; margin-bottom: 20px; font-family: 'Inter', sans-serif;">

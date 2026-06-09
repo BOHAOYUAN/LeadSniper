@@ -570,7 +570,7 @@ function simulateSelfHealingCheck() {
   stats.style.color = "#ff2e4c";
   
   setTimeout(() => {
-    stats.textContent = "✅ DOM 结构偏移已校正 (SHIFT CORRECTED)";
+    stats.textContent = "✅ DOM shift corrected (calibration applied)";
     stats.style.color = "#00ff9d";
     logMessage("[STEALTH] DOM structure shift auto-corrected via AI anchor mappings.", "info");
     
