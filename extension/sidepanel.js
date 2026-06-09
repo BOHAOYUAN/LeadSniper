@@ -1,144 +1,42 @@
-// LeadSniper 3D WebGL Side Panel — Solution Engine (Fixed & Hardened)
+// LeadSniper B2B Sidepanel Solution Engine (Refactored & Three.js Removed)
 
-const container = document.getElementById('canvas-container');
-const logContainer = document.getElementById('log-container');
-const statsEl = document.getElementById('stats');
+// DOM Elements
 const emptyStateEl = document.getElementById('empty-state');
-const detailDrawer = document.getElementById('detail-drawer');
-const closeDrawerBtn = document.getElementById('closeDrawerBtn');
-const syncWebhookBtn = document.getElementById('syncWebhookBtn');
-const directSnipeBtn = document.getElementById('directSnipeBtn');
+const mainDashboardEl = document.getElementById('main-dashboard');
+const signalsCardEl = document.getElementById('signals-card');
+const signalsListEl = document.getElementById('signals-list');
+const statsCounterEl = document.getElementById('stats-counter');
+const statsEl = document.getElementById('stats'); // Advanced metric telemetry element
 const liveTickerEl = document.getElementById('stealth-live-ticker');
 
-// Universal CLI Elements
+// CLI Elements
 const cliInput = document.getElementById('cli-input');
 const cliSubmit = document.getElementById('cli-submit');
-const universalCli = document.getElementById('universal-cli');
+const universalCli = document.getElementById('universal-cli') || (cliInput ? cliInput.parentElement : null);
 
-let scene, camera, renderer;
-let sweepMesh;
-let raycaster, mouse;
-let targets = []; // stored points
+// Action Elements
+const syncWebhookBtn = document.getElementById('syncWebhookBtn');
+const directSnipeBtn = document.getElementById('directSnipeBtn');
+
+let targets = []; // Array of detected targets
 let currentSelectedTarget = null;
 
-// Micro Stealth status array ticker list
+// Stealth ticker simulation texts
 const stealthTickers = [
   "[STEALTH: Spoofing Canvas noise profile...]",
-  "[STEALTH: Simulating human random mouse path...]",
+  "[STEALTH: Simulating random mouse path...]",
   "[STEALTH: Perturbing WebGL parameter matrices...]",
   "[STEALTH: Injecting virtual keyboard layout delays...]",
   "[STEALTH: Bypassing automated cloud headless detectors...]"
 ];
 let currentTickerIdx = 0;
 
+// Initialize
 function init() {
-  scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x050505, 0.0025);
-
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 90;
-  camera.position.y = 25;
-
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x050505, 1);
-  container.appendChild(renderer.domElement);
-
-  // Raycasting Setup
-  raycaster = new THREE.Raycaster();
-  mouse = new THREE.Vector2();
-
-  // 3D Cyberpunk Perspective Grid Helper
-  const gridHelper = new THREE.GridHelper(200, 40, 0x00ff9d, 0x003311);
-  gridHelper.position.y = -30;
-  scene.add(gridHelper);
-
-  // Concentric Radar Rings
-  const ringGroup = new THREE.Group();
-  for (let r = 20; r <= 100; r += 20) {
-    const ringGeo = new THREE.RingGeometry(r - 0.5, r, 64);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff9d, side: THREE.DoubleSide, transparent: true, opacity: 0.12 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    ringGroup.add(ring);
-  }
-  ringGroup.position.y = -29.5;
-  scene.add(ringGroup);
-
-  // Sweeping Radar Line / Plane
-  const sweepGeo = new THREE.PlaneGeometry(100, 2);
-  sweepGeo.translate(50, 0, 0);
-  const sweepMat = new THREE.MeshBasicMaterial({ color: 0x00ff9d, side: THREE.DoubleSide, transparent: true, opacity: 0.25 });
-  sweepMesh = new THREE.Mesh(sweepGeo, sweepMat);
-  sweepMesh.rotation.x = Math.PI / 2;
-  sweepMesh.position.y = -29;
-  scene.add(sweepMesh);
-
-  // Digital Rain Background (Particles)
-  const particlesGeometry = new THREE.BufferGeometry();
-  const particlesCount = 1500;
-  const posArray = new Float32Array(particlesCount * 3);
-
-  for(let i = 0; i < particlesCount * 3; i++) {
-    posArray[i] = (Math.random() - 0.5) * 400;
-  }
-  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-
-  const particlesMaterial = new THREE.PointsMaterial({
-    size: 0.6,
-    color: 0x005522,
-    transparent: true,
-    opacity: 0.7,
-    blending: THREE.AdditiveBlending
-  });
-
-  const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-  scene.add(particlesMesh);
-
-  // Click Intercept for Node Picking
-  window.addEventListener('click', onCanvasClick);
-
-  // Animation Loop
-  const animate = function () {
-    requestAnimationFrame(animate);
-    
-    if (sweepMesh) {
-      sweepMesh.rotation.z -= 0.025;
-    }
-
-    particlesMesh.rotation.y += 0.001;
-    particlesMesh.position.y -= 0.15;
-    if (particlesMesh.position.y < -100) {
-      particlesMesh.position.y = 100;
-    }
-
-    targets.forEach(t => {
-      if(t.mesh) {
-        t.mesh.rotation.x += 0.015;
-        t.mesh.rotation.y += 0.015;
-        const baseScale = t === currentSelectedTarget ? 1.4 : 1.0;
-        const scale = baseScale + Math.sin(Date.now() * 0.005) * 0.12;
-        t.mesh.scale.set(scale, scale, scale);
-      }
-      if (t.floorRing) {
-        t.floorRing.rotation.z += 0.01;
-      }
-    });
-
-    renderer.render(scene, camera);
-  };
-
-  animate();
-
-  window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  });
-
-  // Timers for automated checks & tickers
-  setInterval(simulateSelfHealingCheck, 12000);
+  // Setup stealth ticker rotation
   setInterval(rotateStealthTicker, 3500);
+  // Setup UI self-healing check simulation (keeping original calibration logic representation)
+  setInterval(simulateSelfHealingCheck, 12000);
 }
 
 function rotateStealthTicker() {
@@ -147,87 +45,246 @@ function rotateStealthTicker() {
   liveTickerEl.textContent = stealthTickers[currentTickerIdx];
 }
 
-function onCanvasClick(event) {
-  // Only process clicks on the canvas itself
-  if (event.target.tagName !== 'CANVAS') return;
-
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const meshes = targets.map(t => t.mesh).filter(Boolean);
-  if (meshes.length === 0) return;
-
-  const intersects = raycaster.intersectObjects(meshes);
-
-  if (intersects.length > 0) {
-    const hitMesh = intersects[0].object;
-    const hitTarget = targets.find(t => t.mesh === hitMesh);
-    if (hitTarget) {
-      selectTarget(hitTarget);
-    }
-  }
-}
+// ═══════════ TARGET SELECTION & BINDING ═══════════
 
 function selectTarget(target) {
   if (!target) return;
   currentSelectedTarget = target;
-  scrollToTarget(target.id, target.tabId);
   
+  // Update targets switcher UI classes
+  const badges = document.querySelectorAll('.signal-badge');
+  badges.forEach(b => {
+    if (b.getAttribute('data-target-id') === target.id.toString()) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
+  });
+
+  // Scroll active window context if needed
+  scrollToTarget(target.id, target.tabId);
+
+  // Bind Target fields
   const nameEl = document.getElementById('drawer-target-name');
   const scoreEl = document.getElementById('drawer-score');
   const reasonEl = document.getElementById('drawer-reason');
-  const enrichEl = document.getElementById('drawer-enrichment');
+  const orgEl = document.getElementById('profile-org');
+  const bioEl = document.getElementById('profile-bio');
+  const tagsContainer = document.getElementById('profile-tags');
+
   const profEl = document.getElementById('reply-prof');
   const humorEl = document.getElementById('reply-humor');
   const dirEl = document.getElementById('reply-director');
 
   if (nameEl) nameEl.textContent = ((target.name || 'TARGET NODE') + '').toUpperCase();
-  if (scoreEl) scoreEl.textContent = target.score || 85;
+  if (scoreEl) scoreEl.textContent = target.score || '--';
   if (reasonEl) reasonEl.textContent = target.reason || "High intent metrics matched strategic qualification rules.";
   
-  if (enrichEl) {
-    const p = target.profile || {};
-    enrichEl.innerHTML = `[ORGANIZATION]: ${p.company || 'Enterprise Target Tech'}<br>[AUTHORITY/BIO]: ${p.bio || 'High Net-Worth Individual / Decision Maker.'}`;
+  // Update score ring SVG progress and status text
+  updateScoreRing(target.score || 0);
+
+  // Profile fields
+  const p = target.profile || {};
+  if (orgEl) orgEl.textContent = p.company || 'Enterprise Target Tech';
+  if (bioEl) bioEl.textContent = p.bio || 'High Net-Worth Individual / Decision Maker.';
+
+  // Build Profile Tags
+  if (tagsContainer) {
+    tagsContainer.innerHTML = '';
+    
+    // Authority tag
+    const authTag = document.createElement('span');
+    authTag.className = 'profile-tag-badge';
+    authTag.textContent = p.authority || 'Authority: C-Level';
+    tagsContainer.appendChild(authTag);
+
+    // Platform tag
+    const platformTag = document.createElement('span');
+    platformTag.className = 'profile-tag-badge';
+    platformTag.style.background = '#EFF6FF';
+    platformTag.style.color = '#2563EB';
+    platformTag.style.borderColor = '#BFDBFE';
+    platformTag.textContent = `Source: ${getTargetPlatformLabel(target)}`;
+    tagsContainer.appendChild(platformTag);
+
+    // ICP Match tag
+    if (target.score >= 80) {
+      const icpTag = document.createElement('span');
+      icpTag.className = 'profile-tag-badge';
+      icpTag.style.background = '#ECFDF5';
+      icpTag.style.color = '#047857';
+      icpTag.style.borderColor = '#A7F3D0';
+      icpTag.textContent = 'ICP Match: High';
+      tagsContainer.appendChild(icpTag);
+    }
   }
 
+  // AI Drafts
   const repliesContainer = document.getElementById('drawer-replies-container');
   const generateBtn = document.getElementById('btn-generate-ondemand');
-  const directSnipeBtn = document.getElementById('directSnipeBtn');
 
   if (!target.replies) {
     if (repliesContainer) repliesContainer.style.display = 'none';
-    if (directSnipeBtn) directSnipeBtn.style.display = 'none';
     if (generateBtn) {
       generateBtn.style.display = 'block';
       generateBtn.onclick = () => generateOutreachOnDemand(target);
     }
   } else {
     if (repliesContainer) repliesContainer.style.display = 'block';
-    if (directSnipeBtn) directSnipeBtn.style.display = 'block';
     if (generateBtn) generateBtn.style.display = 'none';
 
     const r = target.replies;
-    if (profEl) profEl.textContent = r.Professional || "No professional draft generated.";
-    if (humorEl) humorEl.textContent = r.Humor || "No humor draft generated.";
-    if (dirEl) dirEl.textContent = r.Director || "No director draft generated.";
+    if (profEl) profEl.textContent = r.Professional || r.Option1 || "No professional draft generated.";
+    if (humorEl) humorEl.textContent = r.Humor || r.Option2 || "No humor draft generated.";
+    if (dirEl) dirEl.textContent = r.Director || r.Option3 || "No director draft generated.";
   }
 
-  if (detailDrawer) {
-    detailDrawer.classList.add('open');
-  }
-
-  const safeName = (target.name || 'Target') + '';
-  logMessage(`Target selected: ${safeName.substring(0, 12)}... Loaded custom outreach drafts.`, 'hot');
+  // Ensure main dashboard displays
+  if (emptyStateEl) emptyStateEl.style.display = 'none';
+  if (mainDashboardEl) mainDashboardEl.style.display = 'flex';
 }
 
-// ═══════════ DRAWER BUTTON HANDLERS ═══════════
+// Helper to calculate SVG circular progress stroke offset
+function updateScoreRing(score) {
+  const scoreRing = document.getElementById('score-ring');
+  const statusEl = document.getElementById('score-status');
+  if (!scoreRing) return;
 
-if (closeDrawerBtn) {
-  closeDrawerBtn.addEventListener('click', (e) => {
+  const radius = scoreRing.r.baseVal.value;
+  const circumference = 2 * Math.PI * radius; // 2 * 3.14159 * 38 = 238.76
+  const offset = circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
+  
+  scoreRing.style.strokeDasharray = `${circumference} ${circumference}`;
+  scoreRing.style.strokeDashoffset = offset;
+
+  // Set colors and status messages based on score
+  if (score >= 80) {
+    scoreRing.style.stroke = '#10B981'; // Emerald Success
+    if (statusEl) statusEl.textContent = '🔥 High Buying Intent';
+  } else if (score >= 50) {
+    scoreRing.style.stroke = '#F59E0B'; // Orange Warning
+    if (statusEl) statusEl.textContent = '⚡ Medium Buying Intent';
+  } else {
+    scoreRing.style.stroke = '#EF4444'; // Red Danger
+    if (statusEl) statusEl.textContent = '⚠️ Low Buying Intent';
+  }
+}
+
+// ═══════════ TARGET CAROUSEL / SELECTOR LIST ═══════════
+
+function updateTargetsListUI() {
+  if (!signalsCardEl || !signalsListEl) return;
+
+  if (targets.length === 0) {
+    signalsCardEl.style.display = 'none';
+    if (mainDashboardEl) mainDashboardEl.style.display = 'none';
+    if (emptyStateEl) {
+      emptyStateEl.style.display = 'flex';
+      const emptyTitle = document.getElementById('empty-title');
+      const emptySub = document.getElementById('empty-subtitle');
+      if (emptyTitle) emptyTitle.textContent = '🔍 Listening for signals...';
+      if (emptySub) emptySub.textContent = 'AI intelligence engine ready. Scroll LinkedIn, X (Twitter), or Reddit community feeds to analyze leads.';
+    }
+    return;
+  }
+
+  // Show active targets card
+  signalsCardEl.style.display = 'flex';
+  
+  if (statsCounterEl) {
+    statsCounterEl.textContent = `Targets: ${targets.length}`;
+  }
+
+  signalsListEl.innerHTML = '';
+  targets.forEach(t => {
+    const badge = document.createElement('div');
+    badge.className = `signal-badge${currentSelectedTarget && currentSelectedTarget.id === t.id ? ' active' : ''}`;
+    badge.setAttribute('data-target-id', t.id);
+    
+    // Choose correct platform icon
+    let platIconHTML = '<i class="fas fa-user platform-icon"></i>';
+    if (t.category === 'COMMERCIAL_LEAD') {
+      platIconHTML = '<i class="fab fa-linkedin platform-icon" style="color:#0a66c2"></i>';
+    } else if (t.category === 'INDUSTRY_NEWS') {
+      platIconHTML = '<i class="fab fa-twitter platform-icon" style="color:#1da1f2"></i>';
+    } else if (t.category === 'CASUAL_POST') {
+      platIconHTML = '<i class="fab fa-reddit-alien platform-icon" style="color:#ff4500"></i>';
+    } else if (t.id.toString().includes('linkedin')) {
+      platIconHTML = '<i class="fab fa-linkedin platform-icon" style="color:#0a66c2"></i>';
+    } else if (t.id.toString().includes('twitter') || t.id.toString().includes('x.com')) {
+      platIconHTML = '<i class="fab fa-twitter platform-icon" style="color:#1da1f2"></i>';
+    } else if (t.id.toString().includes('reddit')) {
+      platIconHTML = '<i class="fab fa-reddit-alien platform-icon" style="color:#ff4500"></i>';
+    }
+
+    const nameText = t.name || 'Target Lead';
+    const scoreColorClass = t.score >= 80 ? 'score-high' : (t.score >= 50 ? 'score-med' : 'score-low');
+    
+    badge.innerHTML = `
+      ${platIconHTML}
+      <span class="badge-name">${nameText}</span>
+      <span class="badge-score ${scoreColorClass}">${t.score}</span>
+    `;
+
+    badge.onclick = (e) => {
+      e.stopPropagation();
+      selectTarget(t);
+    };
+
+    signalsListEl.appendChild(badge);
+  });
+
+  // If no target is selected, default to the first one
+  if (!currentSelectedTarget && targets.length > 0) {
+    selectTarget(targets[0]);
+  }
+}
+
+function getTargetPlatformLabel(target) {
+  if (target.id.toString().includes('linkedin')) return 'LinkedIn';
+  if (target.id.toString().includes('twitter') || target.id.toString().includes('x.com') || target.category === 'INDUSTRY_NEWS') return 'X (Twitter)';
+  if (target.id.toString().includes('reddit') || target.category === 'CASUAL_POST') return 'Reddit';
+  return 'Community Feed';
+}
+
+// ═══════════ DIRECT SNIPE & WEBHOOK ACTIONS ═══════════
+
+if (directSnipeBtn) {
+  directSnipeBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (detailDrawer) detailDrawer.classList.remove('open');
-    currentSelectedTarget = null;
+    if (!currentSelectedTarget) {
+      showToast('⚠️ No target selected');
+      return;
+    }
+
+    const origText = directSnipeBtn.innerHTML;
+    directSnipeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
+    directSnipeBtn.disabled = true;
+
+    const profEl = document.getElementById('reply-prof');
+    const replyText = profEl ? profEl.textContent : '';
+
+    safeCopyToClipboard(replyText).then(ok => {
+      executeReplyRPA(replyText);
+      setTimeout(() => {
+        if (ok && replyText) {
+          directSnipeBtn.innerHTML = '<i class="fas fa-check"></i> Snipe Executed';
+          directSnipeBtn.style.background = '#10B981';
+          directSnipeBtn.style.color = '#FFFFFF';
+          showToast('✓ Snipe copied & auto-populated!');
+        } else {
+          directSnipeBtn.innerHTML = '⚠️ Snipe Failed';
+          directSnipeBtn.style.background = '#EF4444';
+          directSnipeBtn.style.color = '#FFFFFF';
+        }
+        setTimeout(() => {
+          directSnipeBtn.innerHTML = origText;
+          directSnipeBtn.style.background = '';
+          directSnipeBtn.style.color = '';
+          directSnipeBtn.disabled = false;
+        }, 2000);
+      }, 800);
+    });
   });
 }
 
@@ -235,12 +292,12 @@ if (syncWebhookBtn) {
   syncWebhookBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (!currentSelectedTarget) {
-      logMessage('[SYNC] No target selected.', 'cold');
+      showToast('⚠️ No target selected');
       return;
     }
 
-    const origText = syncWebhookBtn.textContent;
-    syncWebhookBtn.textContent = "⚡ PUSHING SECURE PAYLOAD...";
+    const origText = syncWebhookBtn.innerHTML;
+    syncWebhookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
     syncWebhookBtn.disabled = true;
 
     // Pull real webhook config from background
@@ -248,7 +305,6 @@ if (syncWebhookBtn) {
       const webhookUrl = config && config.webhook;
 
       if (webhookUrl) {
-        // Real webhook push
         const payload = {
           source: 'LeadSniper_V3_Radar',
           timestamp: new Date().toISOString(),
@@ -265,82 +321,98 @@ if (syncWebhookBtn) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(res => {
-          syncWebhookBtn.textContent = res.ok ? "✅ CLOUD SYNC SUCCESS" : "⚠️ WEBHOOK ERROR";
-          syncWebhookBtn.style.background = res.ok ? "#00ff9d" : "#ff9800";
-          syncWebhookBtn.style.color = "#000";
-          logMessage(res.ok 
-            ? `[SYNC] Payload exported to Webhook successfully.` 
-            : `[SYNC] Webhook returned ${res.status}.`, res.ok ? 'info' : 'cold');
+          if (res.ok) {
+            syncWebhookBtn.innerHTML = '<i class="fas fa-check"></i> Synced ✓';
+            syncWebhookBtn.style.borderColor = '#10B981';
+            syncWebhookBtn.style.color = '#10B981';
+            showToast('✓ Synced to CRM!');
+          } else {
+            syncWebhookBtn.innerHTML = '⚠️ Webhook Error';
+            syncWebhookBtn.style.borderColor = '#F59E0B';
+            syncWebhookBtn.style.color = '#F59E0B';
+            showToast(`⚠️ Sync failed: ${res.status}`);
+          }
         }).catch(err => {
-          syncWebhookBtn.textContent = "❌ PUSH FAILED";
-          syncWebhookBtn.style.color = "#ff2e4c";
-          logMessage(`[SYNC] Webhook error: ${err.message}`, 'hot');
+          syncWebhookBtn.innerHTML = '❌ Sync Failed';
+          syncWebhookBtn.style.borderColor = '#EF4444';
+          syncWebhookBtn.style.color = '#EF4444';
+          showToast(`❌ Webhook error: ${err.message}`);
         }).finally(() => {
           setTimeout(() => {
-            syncWebhookBtn.textContent = origText;
-            syncWebhookBtn.style.background = "";
-            syncWebhookBtn.style.color = "";
+            syncWebhookBtn.innerHTML = origText;
+            syncWebhookBtn.style.borderColor = '';
+            syncWebhookBtn.style.color = '';
             syncWebhookBtn.disabled = false;
           }, 2000);
         });
       } else {
-        // No webhook configured — show demo animation
         setTimeout(() => {
-          syncWebhookBtn.textContent = "⚠️ NO WEBHOOK URL";
-          syncWebhookBtn.style.color = "#ff9800";
-          logMessage(`[SYNC] No webhook URL configured. Set it in the popup settings.`, 'cold');
+          syncWebhookBtn.innerHTML = '⚠️ No Webhook';
+          syncWebhookBtn.style.borderColor = '#F59E0B';
+          syncWebhookBtn.style.color = '#F59E0B';
+          showToast('⚠️ Webhook URL not set in popup settings');
           setTimeout(() => {
-            syncWebhookBtn.textContent = origText;
-            syncWebhookBtn.style.background = "";
-            syncWebhookBtn.style.color = "";
+            syncWebhookBtn.innerHTML = origText;
+            syncWebhookBtn.style.borderColor = '';
+            syncWebhookBtn.style.color = '';
             syncWebhookBtn.disabled = false;
           }, 2000);
-        }, 400);
+        }, 500);
       }
     });
   });
 }
 
-if (directSnipeBtn) {
-  directSnipeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!currentSelectedTarget) {
-      logMessage('[SNIPE] No target selected.', 'cold');
-      return;
+// ═══════════ DRAFTS COPY CLICK EVENT DELEGATION ═══════════
+
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.reply-card[data-copy-target]');
+  if (!card) return;
+  e.stopPropagation();
+
+  const targetId = card.getAttribute('data-copy-target');
+  const textEl = document.getElementById(targetId);
+  if (!textEl) return;
+
+  const text = textEl.textContent || textEl.innerText;
+  if (!text || text.includes('Awaiting strategic target analysis')) return;
+
+  safeCopyToClipboard(text).then(ok => {
+    executeReplyRPA(text);
+    
+    // Copy feedback inside card
+    const btn = card.querySelector('.btn-copy-mini');
+    const tip = card.querySelector('.copy-tip');
+    const originalBtnHTML = btn ? btn.innerHTML : '';
+    
+    if (btn) {
+      btn.innerHTML = ok ? '<i class="fas fa-check"></i> Copied' : '<i class="fas fa-exclamation-triangle"></i> Failed';
+      btn.style.color = ok ? '#10B981' : '#EF4444';
     }
-
-    const origText = directSnipeBtn.textContent;
-    directSnipeBtn.textContent = "⚡ PREPARING OUTREACH...";
-    directSnipeBtn.disabled = true;
-
-    const profEl = document.getElementById('reply-prof');
-    const replyText = profEl ? profEl.textContent : '';
-
-    safeCopyToClipboard(replyText).then(ok => {
-      executeReplyRPA(replyText);
-      setTimeout(() => {
-        if (ok && replyText) {
-          directSnipeBtn.textContent = "✅ DIRECT SNIPE EXECUTED";
-          directSnipeBtn.style.background = "#ff2e4c";
-          directSnipeBtn.style.color = "#fff";
-          logMessage(`[SNIPE] Outreach copied & auto-populated for ${(currentSelectedTarget.name || 'Target').substring(0, 12)}.`, 'hot');
-        } else {
-          directSnipeBtn.textContent = "⚠️ SNIPE FAILED";
-          directSnipeBtn.style.color = "#ff9800";
-          logMessage(`[SNIPE] Could not snipe target. Try clicking a reply card directly.`, 'cold');
-        }
-        setTimeout(() => {
-          directSnipeBtn.textContent = origText;
-          directSnipeBtn.style.background = "";
-          directSnipeBtn.style.color = "";
-          directSnipeBtn.disabled = false;
-        }, 2500);
-      }, 600);
-    });
+    if (tip) {
+      tip.textContent = ok ? '✓ Copied to clipboard & draft populated!' : '⚠️ Failed to copy';
+    }
+    
+    const prevBorder = card.style.borderColor;
+    const prevBg = card.style.background;
+    card.style.borderColor = ok ? '#10B981' : '#EF4444';
+    card.style.background = ok ? '#F0FDF4' : '#FEF2F2';
+    
+    setTimeout(() => {
+      if (btn) {
+        btn.innerHTML = originalBtnHTML;
+        btn.style.color = '';
+      }
+      if (tip) {
+        tip.textContent = 'Click to copy & auto-fill';
+      }
+      card.style.borderColor = prevBorder;
+      card.style.background = prevBg;
+    }, 1500);
   });
-}
+});
 
-// ═══════════ UNIVERSAL AGENT LOGIC ═══════════
+// ═══════════ UNIVERSAL COMMAND LINE (CLI) ═══════════
 
 if (cliSubmit) {
   cliSubmit.addEventListener('click', async () => {
@@ -349,18 +421,20 @@ if (cliSubmit) {
 
     cliInput.disabled = true;
     cliSubmit.disabled = true;
-    cliSubmit.textContent = "SCANNING...";
-    universalCli.classList.add('processing');
-    logMessage(`[UNIVERSAL] Executing command: ${command}`, 'cold');
+    const origSubmitText = cliSubmit.innerHTML;
+    cliSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scan...';
+    if (universalCli) universalCli.classList.add('processing');
+    
+    showToast('Executing agent CLI command...');
 
     try {
       // 1. Get Active Tab
       const tabs = await new Promise(res => chrome.tabs.query({active: true, currentWindow: true}, res));
       if (!tabs || tabs.length === 0 || !tabs[0].id) {
-        throw new Error("Cannot detect active tab.");
+        throw new Error("No active browser tab detected.");
       }
 
-      // 2. Inject Extractor Script
+      // 2. Inject Page Context Extractor Script
       const injection = await new Promise((res, rej) => {
         chrome.scripting.executeScript({
           target: { tabId: tabs[0].id },
@@ -374,10 +448,9 @@ if (cliSubmit) {
       const extractedData = injection[0].result;
       if (!extractedData || !extractedData.text) throw new Error("No readable text found on page.");
       
-      logMessage(`[UNIVERSAL] DOM extracted (${extractedData.interactiveElements.length} elements). Analyzing...`, 'info');
-      cliSubmit.textContent = "ANALYZING...";
+      cliSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyze...';
 
-      // 3. Send to Background AI
+      // 3. Dispatch to Background AI Processor
       chrome.runtime.sendMessage({
         type: 'UNIVERSAL_COMMAND',
         command: command,
@@ -385,22 +458,28 @@ if (cliSubmit) {
         elements: extractedData.interactiveElements
       }, (response) => {
         if (response && response.error) {
-          logMessage(`[ERROR] AI Error: ${response.error}`, 'hot');
+          showToast(`❌ AI error: ${response.error}`);
         } else if (response) {
-          // Display the result
-          logMessage(`[UNIVERSAL] Intelligence parsed successfully.`, 'info');
+          showToast(`✓ Universal Command executed!`);
           displayUniversalResult(command, response, extractedData, tabs[0].id);
         } else {
-          logMessage(`[ERROR] Unknown error from background.`, 'hot');
+          showToast(`❌ Unknown response error.`);
         }
         
-        // Reset UI
-        resetCliUI();
+        // Reset CLI input state
+        cliInput.disabled = false;
+        cliSubmit.disabled = false;
+        cliSubmit.innerHTML = origSubmitText;
+        if (universalCli) universalCli.classList.remove('processing');
+        cliInput.value = '';
       });
 
     } catch(e) {
-      logMessage(`[ERROR] ${e.message}`, 'hot');
-      resetCliUI();
+      showToast(`❌ Error: ${e.message}`);
+      cliInput.disabled = false;
+      cliSubmit.disabled = false;
+      cliSubmit.innerHTML = origSubmitText;
+      if (universalCli) universalCli.classList.remove('processing');
     }
   });
 
@@ -409,54 +488,35 @@ if (cliSubmit) {
   });
 }
 
-function resetCliUI() {
-  cliInput.disabled = false;
-  cliSubmit.disabled = false;
-  cliSubmit.textContent = "EXECUTE";
-  universalCli.classList.remove('processing');
-  cliInput.value = '';
-}
-
 function displayUniversalResult(command, aiData, domData, activeTabId) {
-  // We'll create a synthetic "Target" to display in the Drawer
+  // Create a synthetic target for command output display
   const mockTarget = {
     id: aiData.Target_ID || ('universal-' + Date.now()),
     tabId: activeTabId,
     score: 99,
-    name: "UNIVERSAL COMMAND RESULT",
-    reason: aiData.Analysis || "No analysis provided.",
+    name: "CLI AGENT RESULT",
+    reason: aiData.Analysis || "Executed custom command on page contents.",
     category: "UNIVERSAL_AGENT",
     profile: {
-      company: "Command: " + (command.length > 20 ? command.substring(0,20)+'...' : command),
-      bio: "Context: Generic Web Page"
+      company: "Command: " + (command.length > 22 ? command.substring(0,22)+'...' : command),
+      bio: "Context: Generic Web Page Content"
     },
     replies: aiData.Draft_Replies || {}
   };
   
-  // Highlight target if AI found a specific element
   if (aiData.Target_ID) {
-    logMessage(`[UNIVERSAL] Agent pinpointed element: ${aiData.Target_ID}.`, 'hot', aiData.Target_ID, mockTarget.tabId);
+    scrollToTarget(aiData.Target_ID, mockTarget.tabId);
   }
 
-  // Reuse the target selection UI
-  selectTarget(mockTarget);
-  
-  // Custom tweaks to the drawer for universal mode
-  const profEl = document.getElementById('reply-prof');
-  const humorEl = document.getElementById('reply-humor');
-  const dirEl = document.getElementById('reply-director');
-  
-  if (profEl && aiData.Draft_Replies) profEl.textContent = aiData.Draft_Replies.Option1 || "N/A";
-  if (humorEl && aiData.Draft_Replies) humorEl.textContent = aiData.Draft_Replies.Option2 || "N/A";
-  if (dirEl && aiData.Draft_Replies) dirEl.textContent = aiData.Draft_Replies.Option3 || "N/A";
+  // Push to targets lists memory
+  spawnTarget(mockTarget.id, mockTarget.score, mockTarget.name, mockTarget.reason, mockTarget.category, mockTarget.profile, mockTarget.replies, mockTarget.tabId);
 }
 
-// NOTE: This function is serialized and injected into the target tab.
-// It cannot reference variables outside its scope.
+// ═══════════ SERIALIZED PAGE CONTEXT EXTRACTOR ═══════════
 function extractUniversalContext() {
   const elements = document.querySelectorAll('p, h1, h2, h3, article, section, [role="article"], button, a, input, textarea');
   let distilled = [];
-  let textContext = document.body.innerText.substring(0, 3000); // Send first 3000 chars as general context
+  let textContext = document.body.innerText.substring(0, 3000);
   
   let idCounter = 0;
   elements.forEach(el => {
@@ -464,7 +524,7 @@ function extractUniversalContext() {
       const rect = el.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         const id = 'hy-univ-' + (++idCounter);
-        el.setAttribute('data-ls-id', id); // Reuse data-ls-id for scrollToTarget compatibility
+        el.setAttribute('data-ls-id', id);
         distilled.push({
           id: id,
           tag: el.tagName,
@@ -481,68 +541,57 @@ function extractUniversalContext() {
   };
 }
 
-// ═══════════ UTILITIES ═══════════
+// ═══════════ OTHER HELPER UTILITIES ═══════════
 
 function generateOutreachOnDemand(target) {
   const btn = document.getElementById('btn-generate-ondemand');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "⚡ GENERATING OUTREACH...";
-    btn.style.color = "#ff9800";
-    btn.style.borderColor = "#ff9800";
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
   }
   
-  logMessage(`[AI] Generating on-demand outreach for ${target.name || 'Target'}...`, 'info');
-
   chrome.runtime.sendMessage({ type: 'ENRICH_ON_DEMAND', targetId: target.id }, (response) => {
     if (chrome.runtime.lastError) {
-      logMessage(`[ERROR] Background script disconnected.`, 'hot');
+      showToast('❌ Background script offline.');
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "⚠️ CONNECTION FAILED";
+        btn.innerHTML = '⚡ ANALYZE & GENERATE OUTREACH';
       }
       return;
     }
     
     if (response && response.error) {
-      logMessage(`[ERROR] Generation failed: ${response.error}`, 'hot');
+      showToast(`❌ Generation failed: ${response.error}`);
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "⚠️ GENERATION FAILED";
+        btn.innerHTML = '⚡ ANALYZE & GENERATE OUTREACH';
       }
       return;
     }
 
     if (response && response.success && response.target) {
-      logMessage(`[AI] Outreach drafts generated successfully.`, 'hot');
-      // Update memory
+      showToast('✓ AI outreach generated!');
+      // Update local storage targets
       const index = targets.findIndex(t => t.id === response.target.id);
-      if (index !== -1) targets[index] = response.target;
-      
-      // If still selected, refresh drawer
-      if (currentSelectedTarget && currentSelectedTarget.id === response.target.id) {
-        currentSelectedTarget = response.target;
-        selectTarget(currentSelectedTarget);
+      if (index !== -1) {
+        targets[index] = response.target;
       }
+      
+      if (currentSelectedTarget && currentSelectedTarget.id === response.target.id) {
+        selectTarget(response.target);
+      }
+      updateTargetsListUI();
     }
   });
 }
 
 function executeReplyRPA(replyText) {
-  if (!currentSelectedTarget) {
-    logMessage('[RPA] No target selected.', 'cold');
-    return;
-  }
+  if (!currentSelectedTarget) return;
   
   const tabId = currentSelectedTarget.tabId;
   const id = currentSelectedTarget.id;
   
-  if (!tabId) {
-    logMessage('[RPA] Target is missing active tab context.', 'cold');
-    return;
-  }
-  
-  logMessage(`[RPA] Initiating auto-reply sequence...`, 'info');
+  if (!tabId) return;
   
   chrome.tabs.sendMessage(tabId, {
     type: 'EXECUTE_RPA_REPLY',
@@ -550,69 +599,51 @@ function executeReplyRPA(replyText) {
     text: replyText
   }, (response) => {
     if (chrome.runtime.lastError) {
-      logMessage(`[RPA] Error communicating with tab: ${chrome.runtime.lastError.message}`, 'hot');
+      console.warn(`[RPA] message failed: ${chrome.runtime.lastError.message}`);
       return;
-    }
-    if (response && response.success) {
-      logMessage(`[RPA] Auto-reply populated successfully on target.`, 'info');
-    } else {
-      logMessage(`[RPA] Auto-reply failed or element not found: ${response ? response.error : 'unknown'}`, 'cold');
     }
   });
 }
 
 function simulateSelfHealingCheck() {
-  if (targets.length === 0) return;
-  const stats = document.getElementById('stats');
-  if (!stats) return;
+  if (targets.length === 0 || !statsEl) return;
   
-  stats.textContent = "⚠️ DOM ENGINE SHIFT DETECTED :: CALIBRATING...";
-  stats.style.color = "#ff2e4c";
+  const origText = statsEl.textContent;
+  statsEl.textContent = "⚠️ SHIELD SHIFT :: RE-CALIBRATING...";
+  statsEl.style.color = "#F59E0B";
   
   setTimeout(() => {
-    stats.textContent = "✅ DOM shift corrected (calibration applied)";
-    stats.style.color = "#00ff9d";
-    logMessage("[STEALTH] DOM structure shift auto-corrected via AI anchor mappings.", "info");
+    statsEl.textContent = "✅ SHIELD SHIFT AUTO-CORRECTED";
+    statsEl.style.color = "#10B981";
     
     setTimeout(() => {
-      stats.textContent = `Targets Active: ${targets.length} | Tier: Studio Professional`;
-      stats.style.color = "#aaa";
-    }, 3000);
-  }, 800);
+      statsEl.textContent = `Targets Active: ${targets.length} | Tier: Studio Professional`;
+      statsEl.style.color = '';
+    }, 2500);
+  }, 1000);
 }
 
 function scrollToTarget(id, tabId = null) {
   if (!id) return;
   
   if (id.toString().startsWith('demo-')) {
-    logMessage('[SYSTEM] Target telemetry unavailable. Awaiting live signal.', 'cold');
-    return;
+    return; // No real tab context for demo mocks
   }
 
   const payload = { type: 'SCROLL_TO_POST', id: id };
-
-  const handleResponse = (res) => {
-    if (res && !res.success) {
-      logMessage(`[WARNING] Target element scrolled out of DOM (Recycled by platform).`, 'hot');
-    }
-  };
 
   try {
     if (tabId) {
       chrome.tabs.sendMessage(tabId, payload, (res) => {
         if (chrome.runtime.lastError) {
-           // Fallback to active tab
            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-             if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, payload, handleResponse);
+             if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, payload, () => {});
            });
-        } else {
-           handleResponse(res);
         }
       });
     } else {
-      // Fallback
       chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, payload, handleResponse);
+        if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, payload, () => {});
       });
     }
   } catch(e) {
@@ -620,27 +651,14 @@ function scrollToTarget(id, tabId = null) {
   }
 }
 
-function logMessage(msg, type="info", id=null, tabId=null) {
-  if (!logContainer) return;
-  const el = document.createElement('div');
-  el.className = 'log-entry';
-  const color = type === 'hot' ? '#ff2e4c' : (type === 'cold' ? '#00e5ff' : '#00ff9d');
-  el.style.color = color;
-  el.textContent = `> ${msg}`;
-  
-  if (id) {
-    el.style.cursor = 'pointer';
-    el.style.pointerEvents = 'auto'; // CSS overrides parent pointer-events: none
-    el.title = 'Click to Jump';
-    el.onclick = () => scrollToTarget(id, tabId);
-    el.onmouseenter = () => el.style.background = 'rgba(0, 255, 157, 0.2)';
-    el.onmouseleave = () => el.style.background = 'rgba(0,0,0,0.6)';
-  }
-  
-  logContainer.appendChild(el);
-  if (logContainer.children.length > 8) {
-    logContainer.removeChild(logContainer.firstChild);
-  }
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.innerHTML = msg;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2500);
 }
 
 // Robust clipboard copy with fallback
@@ -650,7 +668,6 @@ async function safeCopyToClipboard(text) {
     await navigator.clipboard.writeText(text);
     return true;
   } catch(e) {
-    // Fallback: textarea trick
     try {
       const ta = document.createElement('textarea');
       ta.value = text;
@@ -667,106 +684,54 @@ async function safeCopyToClipboard(text) {
   }
 }
 
-// ═══════════ 3D TARGET SPAWNER ═══════════
+// ═══════════ TARGET SPAWNING PIPELINE ═══════════
 
 function spawnTarget(id, score, name, reason, category, profile=null, replies=null, tabId=null) {
+  // Prevent duplicates
   if (targets.find(t => t.id === id)) return;
   
-  if (emptyStateEl) {
-    emptyStateEl.style.opacity = '0';
-  }
-
-  const isHot = score >= 80;
-  let colorHex = 0x00ff9d;
-  let logType = 'info';
-  let catBadge = '[NEWS]';
-  
-  if (category === 'COMMERCIAL_LEAD' || isHot) {
-    colorHex = 0xff2e4c;
-    logType = 'hot';
-    catBadge = '🔥[COMMERCE]';
-  } else if (category === 'INDUSTRY_NEWS') {
-    colorHex = 0x00e5ff;
-    logType = 'cold';
-    catBadge = '📰[NEWS]';
-  } else {
-    colorHex = 0x004411;
-    logType = 'cold';
-    catBadge = '🎨[ART/CASUAL]';
-  }
-  
-  const geometry = new THREE.IcosahedronGeometry(isHot ? 4.5 : 2.5, 0);
-  const material = new THREE.MeshBasicMaterial({ 
-    color: colorHex, 
-    wireframe: true,
-    transparent: true,
-    opacity: isHot ? 0.95 : 0.5
-  });
-  
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.x = (Math.random() - 0.5) * 120;
-  mesh.position.y = (Math.random() * 40) - 10;
-  mesh.position.z = (Math.random() - 0.5) * 80;
-  scene.add(mesh);
-
-  const points = [];
-  points.push(new THREE.Vector3(mesh.position.x, mesh.position.y, mesh.position.z));
-  points.push(new THREE.Vector3(mesh.position.x, -30, mesh.position.z));
-  const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-  const lineMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: isHot ? 0.4 : 0.2 });
-  const stemLine = new THREE.Line(lineGeo, lineMat);
-  scene.add(stemLine);
-
-  const floorRingGeo = new THREE.RingGeometry(1.5, 3.0, 16);
-  const floorRingMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: isHot ? 0.6 : 0.3 });
-  const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
-  floorRing.rotation.x = Math.PI / 2;
-  floorRing.position.set(mesh.position.x, -29.8, mesh.position.z);
-  scene.add(floorRing);
-  
-  const newTarget = { id, score, mesh, stemLine, floorRing, name: name || 'Target', reason, category, profile, replies, tabId };
+  const newTarget = { id, score, name: name || 'Target Lead', reason, category, profile, replies, tabId };
   targets.push(newTarget);
   
-  if (statsEl) {
-    statsEl.textContent = `Targets Active: ${targets.length} | Tier: Studio Professional`;
-  }
+  updateTargetsListUI();
 
-  const safeName = (name || 'Target') + '';
-  logMessage(`${catBadge} ${safeName.substring(0, 10)} (${score}): ${reason ? reason.substring(0, 32) : ''}...`, logType, id, tabId);
-
-  if (isHot && !currentSelectedTarget) {
-    setTimeout(() => selectTarget(newTarget), 500);
+  // If this target is high intent (>= 80) and we haven't selected anything yet, select it!
+  if (score >= 80 && (!currentSelectedTarget || currentSelectedTarget.id.toString().startsWith('demo-'))) {
+    selectTarget(newTarget);
   }
 }
 
-// ═══════════ MESSAGE PIPELINE ═══════════
+// ═══════════ CHROME MESSAGE PIPELINE ═══════════
 
-// Listen for real-time data from background.js
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === 'SYNC_3D_RADAR') {
     const p = msg.payload || {};
+    // If a demo target is active, clear targets to receive first real target
+    if (targets.length === 1 && targets[0].id === 'demo-1') {
+      targets = [];
+      currentSelectedTarget = null;
+    }
     spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId);
   }
+  
   if (msg.type === 'SELECT_TARGET_IN_PANEL') {
     const target = targets.find(t => t.id === msg.id);
     if (target) {
       selectTarget(target);
-    } else {
-      console.warn(`[Radar] SELECT_TARGET_IN_PANEL failed: Target ${msg.id} not found in sidepanel targets list.`);
     }
   }
 });
 
-// On init: Pull any stored targets from background (fixes "dead" panel when opened after scanning)
+// Stored targets reloading (fetches cached targets on sidepanel load)
 function loadStoredTargets() {
   try {
     chrome.runtime.sendMessage({ type: 'GET_RADAR_TARGETS' }, (response) => {
       if (chrome.runtime.lastError) {
-        console.warn('[Radar] Could not fetch stored targets:', chrome.runtime.lastError.message);
+        console.warn('[Radar] Stored targets reload error:', chrome.runtime.lastError.message);
         return;
       }
       if (response && response.targets && response.targets.length > 0) {
-        console.log(`[Radar] Loading ${response.targets.length} stored targets...`);
+        console.log(`[Radar] Restoring ${response.targets.length} targets...`);
         response.targets.forEach(p => {
           spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId);
         });
@@ -777,64 +742,26 @@ function loadStoredTargets() {
   }
 }
 
-// Event delegation for reply card copy
-document.addEventListener('click', (e) => {
-  const card = e.target.closest('.reply-card[data-copy-target]');
-  if (!card) return;
-  e.stopPropagation();
+// ═══════════ SYSTEM STARTUP ═══════════
 
-  const targetId = card.getAttribute('data-copy-target');
-  const textEl = document.getElementById(targetId);
-  if (!textEl) return;
+init();
+loadStoredTargets();
 
-  const text = textEl.innerText;
-  if (!text) return;
-
-  safeCopyToClipboard(text).then(ok => {
-    executeReplyRPA(text);
-    
-    const tip = card.querySelector('.copy-tip');
-    const origBorder = card.style.borderColor;
-    card.style.borderColor = ok ? '#00ff9d' : '#ff9800';
-    card.style.background = ok ? 'rgba(0,255,157,0.15)' : 'rgba(255,152,0,0.15)';
-    if (tip) tip.textContent = ok ? '✅ Executed!' : '⚠️ Failed';
-    setTimeout(() => {
-      card.style.borderColor = origBorder;
-      card.style.background = '';
-      if (tip) tip.textContent = 'Click to Copy';
-    }, 800);
-  });
-});
-
-// ═══════════ INIT ═══════════
-
-if(window.THREE) {
-  init();
-
-  // Load any targets already analyzed before the panel was opened
-  loadStoredTargets();
-
-  // Spawn demo target after a short delay (only if no real targets loaded)
-  setTimeout(() => {
-    if (targets.length === 0) {
-      spawnTarget(
-        "demo-1", 
-        95, 
-        "Silicon Valley AI Founder", 
-        "Experiencing high API friction and conversion degradation. Ready to deploy custom scalable automation.",
-        "COMMERCIAL_LEAD",
-        { company: "NextGen AI Infrastructures", bio: "Serial founder. Backed by top VCs. Building high-throughput SaaS tools." },
-        {
-          Professional: "Saw your post regarding scale limitations. We specialize in zero-latency infrastructure overlays that bypass standard pipeline bottlenecks. Let's align.",
-          Humor: "Nothing like watching standard selector engines break on React re-renders. If you're ready for an AI agent that doesn't trigger cloud alerts, check our stealth stack.",
-          Director: "Every scalable system is just a well-directed sequence of state changes. Let's rewrite the script on your acquisition flow—no backstage setup required."
-        }
-      );
-    }
-  }, 1500);
-} else {
-  console.error("[Radar] Three.js not loaded!");
-  if (logContainer) {
-    logMessage("[ERROR] WebGL engine failed to load. Check three.min.js.", "hot");
+// Spawn a premium demo target on idle if no targets are detected within 1.5 seconds
+setTimeout(() => {
+  if (targets.length === 0) {
+    spawnTarget(
+      "demo-1", 
+      92, 
+      "Silicon Valley AI Founder", 
+      "Experiencing high API friction and conversion degradation. Ready to deploy custom scalable automation.",
+      "COMMERCIAL_LEAD",
+      { company: "NextGen AI Infrastructures", bio: "Serial founder. Backed by top VCs. Building high-throughput SaaS tools." },
+      {
+        Professional: "Saw your post regarding scale limitations. We specialize in zero-latency infrastructure overlays that bypass standard pipeline bottlenecks. Let's align.",
+        Humor: "Nothing like watching standard selector engines break on React re-renders. If you're ready for an AI agent that doesn't trigger cloud alerts, check our stealth stack.",
+        Director: "Every scalable system is just a well-directed sequence of state changes. Let's rewrite the script on your acquisition flow—no backstage setup required."
+      }
+    );
   }
-}
+}, 1500);

@@ -1,4 +1,4 @@
-﻿const STORAGE_KEYS = {
+const STORAGE_KEYS = {
   API_KEY:     'leadsniper_api_key',
   NICHE:       'leadsniper_niche',
   ENDPOINT:    'leadsniper_endpoint',
@@ -76,7 +76,7 @@ function startScramCountdown(cooldownTime) {
         $scramCooldownText.style.display = 'inline-block';
         const minutes = Math.floor(remaining / 60000);
         const seconds = Math.floor((remaining % 60000) / 1000);
-        $scramCooldownText.innerHTML = `<i class="fas fa-hourglass-half"></i> �?${minutes}:${seconds.toString().padStart(2, '0')}`;
+        $scramCooldownText.innerHTML = `<i class="fas fa-hourglass-half"></i> \u23F3 ${minutes}:${seconds.toString().padStart(2, '0')}`;
       }
       if ($modePilotBtn) {
         $modePilotBtn.classList.remove('active');
@@ -272,7 +272,7 @@ if ($masterSwitch) {
     const active = $masterSwitch.checked;
     chrome.storage.local.set({ leadsniper_active: active });
     updateStatusDot(active);
-    showToast(active ? '🛰�?SCANNER ONLINE' : '💤 SCANNER OFFLINE', !active);
+    showToast(active ? '🛰\uFE0F SCANNER ONLINE' : '💤 SCANNER OFFLINE', !active);
   });
 }
 
@@ -297,7 +297,7 @@ if ($modeHunterBtn) {
       } else {
         chrome.storage.local.set({ leadsniper_autohunter: true, leadsniper_autopilot: false }, () => {
           refreshLicenseUI();
-          showToast('�?AUTO-HUNTER ONLINE', false);
+          showToast('\uD83C\uDFAF AUTO-HUNTER ONLINE', false);
         });
       }
     });
@@ -312,7 +312,7 @@ if ($modePilotBtn) {
       const cooldownUntil = res.leadsniper_scram_cooldown_until || 0;
 
       if (cooldownUntil > Date.now()) {
-        showToast('�?COOLDOWN ACTIVE', true);
+        showToast('\u23F3 COOLDOWN ACTIVE', true);
         return;
       }
 
@@ -338,7 +338,7 @@ if ($modePilotBtn) {
           } else {
             chrome.storage.local.set({ leadsniper_autopilot: true, leadsniper_autohunter: false }, () => {
               refreshLicenseUI();
-              showToast('🛰�?AUTO-PILOT ON', false);
+              showToast('🛰\uFE0F AUTO-PILOT ON', false);
             });
           }
         });
@@ -356,7 +356,7 @@ if ($acceptDisclaimerBtn) {
     }, () => {
       if ($disclaimerModal) $disclaimerModal.style.display = 'none';
       refreshLicenseUI();
-      showToast('🛰�?AUTO-PILOT ON', false);
+      showToast('🛰\uFE0F AUTO-PILOT ON', false);
     });
   });
 }
@@ -491,7 +491,7 @@ if ($testConnBtn) {
     const model = $apiModel.value.trim() || 'deepseek-chat';
 
     if (!apiKey) {
-      showToast('�?ENTER API KEY FIRST', true);
+      showToast('\u26A0 ENTER API KEY FIRST', true);
       return;
     }
 
@@ -515,14 +515,14 @@ if ($testConnBtn) {
 
       if (res.ok || res.status === 400) {
         $testConnBtn.textContent = "TEST";
-        showToast('�?CONNECTION VERIFIED', false);
+        showToast('\u2705 CONNECTION VERIFIED', false);
       } else {
         $testConnBtn.textContent = "TEST";
-        showToast('�?CONNECTION FAILED', true);
+        showToast('\u274C CONNECTION FAILED', true);
       }
     } catch (err) {
       $testConnBtn.textContent = "TEST";
-      showToast('�?NETWORK ERROR', true);
+      showToast('\u26A0 NETWORK ERROR', true);
     } finally {
       $testConnBtn.disabled = false;
     }
