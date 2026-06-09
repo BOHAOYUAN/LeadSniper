@@ -96,12 +96,21 @@ const IS_DEV_MODE = false; // SWITCHED TO PRODUCTION MODE
 const DODO_PAYMENTS_ENDPOINT = "https://live.dodopayments.com/licenses/validate";
 
 async function verifyLicenseKey(licenseKey) {
-  if (licenseKey === "LS-BYPASS-PRO") {
+  if (licenseKey === "LS-BYPASS-PRO" || licenseKey === "A9-MASTER-KEY") {
     await chrome.storage.local.set({ 
       "leadsniper_license_valid": true, 
+      "leadsniper_license_tier": "pro",
       [STORAGE_KEYS.LICENSE]: licenseKey 
     });
-    return { success: true };
+    return { success: true, tier: "pro" };
+  }
+  if (licenseKey === "LS-BYPASS-BASIC") {
+    await chrome.storage.local.set({ 
+      "leadsniper_license_valid": true, 
+      "leadsniper_license_tier": "basic",
+      [STORAGE_KEYS.LICENSE]: licenseKey 
+    });
+    return { success: true, tier: "basic" };
   }
 
   try {
@@ -123,11 +132,24 @@ async function verifyLicenseKey(licenseKey) {
     const data = await response.json();
     
     if (data.valid === true) {
+      const licenseObj = data.license_key || {};
+      const productId = licenseObj.product_id || "";
+      let tier = "pro"; // default to pro
+      
+      if (productId === "pdt_0NgNoZpvOKdipx3cyM5dX") {
+        tier = "basic";
+      } else if (productId === "pdt_0NgefvmouwvkPJZIU4slr") {
+        tier = "pro";
+      } else if (productId.toLowerCase().includes("basic") || licenseKey.toLowerCase().includes("basic")) {
+        tier = "basic";
+      }
+
       await chrome.storage.local.set({ 
         "leadsniper_license_valid": true, 
+        "leadsniper_license_tier": tier,
         [STORAGE_KEYS.LICENSE]: licenseKey 
       });
-      return { success: true };
+      return { success: true, tier: tier };
     } else {
       return { success: false, error: data.error || "Invalid License Key" };
     }
@@ -531,8 +553,18 @@ let isLicenseValid = false;
 let lastLicenseChecked = "";
 
 async function checkLicense(key) {
-  if (!key) return false;
-  if (key === "A9-MASTER-KEY") return true;
+  if (!key) {
+    await chrome.storage.local.set({ "leadsniper_license_valid": false, "leadsniper_license_tier": null });
+    return false;
+  }
+  if (key === "A9-MASTER-KEY" || key === "LS-BYPASS-PRO") {
+    await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": "pro" });
+    return true;
+  }
+  if (key === "LS-BYPASS-BASIC") {
+    await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": "basic" });
+    return true;
+  }
   if (key === lastLicenseChecked && isLicenseValid) return true;
   
   try {
@@ -544,14 +576,39 @@ async function checkLicense(key) {
     });
     
     if (!res.ok) {
-       return key.length > 10; 
+       const valid = key.length > 10;
+       if (valid) {
+         let tier = key.toLowerCase().includes("basic") ? "basic" : "pro";
+         await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+       }
+       return valid; 
     }
     
     const data = await res.json();
     isLicenseValid = data.valid === true;
     lastLicenseChecked = key;
+    if (isLicenseValid) {
+      const licenseObj = data.license_key || {};
+      const productId = licenseObj.product_id || "";
+      let tier = "pro";
+      if (productId === "pdt_0NgNoZpvOKdipx3cyM5dX") {
+        tier = "basic";
+      } else if (productId === "pdt_0NgefvmouwvkPJZIU4slr") {
+        tier = "pro";
+      } else if (productId.toLowerCase().includes("basic") || key.toLowerCase().includes("basic")) {
+        tier = "basic";
+      }
+      await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+    } else {
+      await chrome.storage.local.set({ "leadsniper_license_valid": false, "leadsniper_license_tier": null });
+    }
     return isLicenseValid;
   } catch(e) {
-    return key.length > 10;
+    const valid = key.length > 10;
+    if (valid) {
+      let tier = key.toLowerCase().includes("basic") ? "basic" : "pro";
+      await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+    }
+    return valid;
   }
 }

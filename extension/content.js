@@ -992,11 +992,13 @@ function processPost(post) {
       injectHUD(post, response.Confidence_Score, response.Intelligence_Summary || response.Pain_Point_Analysis, response.Enriched_Profile, response.Replies, 'HOT');
       
       // AUTO-PILOT INITIATION
-      chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold'], (settings) => {
+      chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_autopilot_threshold', 'leadsniper_license_valid', 'leadsniper_license_tier'], (settings) => {
         const autopilotActive = settings.leadsniper_autopilot === true;
         const threshold = settings.leadsniper_autopilot_threshold || 85;
+        const hasLicense = settings.leadsniper_license_valid === true;
+        const tier = settings.leadsniper_license_tier || 'basic';
         
-        if (autopilotActive && !document.hidden && response.Confidence_Score >= threshold) {
+        if (autopilotActive && hasLicense && tier === 'pro' && !document.hidden && response.Confidence_Score >= threshold) {
           triggerAutoPilot(post, response.Replies);
         }
       });
