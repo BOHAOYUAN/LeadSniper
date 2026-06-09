@@ -37,6 +37,7 @@ const $scarcityBadge = document.getElementById('scarcityBadge');
 const $seatsLeft = document.getElementById('seatsLeft');
 const $limitWarning = document.getElementById('limitWarning');
 const $upgradeFromWarning = document.getElementById('upgradeFromWarning');
+const $highVolumeWarning = document.getElementById('highVolumeWarning');
 
 const $autoPilotThreshold = document.getElementById('autoPilotThreshold');
 const $thresholdVal = document.getElementById('thresholdVal');
@@ -169,6 +170,15 @@ function refreshLicenseUI() {
         $limitWarning.classList.remove('hidden');
       } else {
         $limitWarning.classList.add('hidden');
+      }
+    }
+
+    // Toggle high-volume warning safety banner (>50 drafts/day)
+    if ($highVolumeWarning) {
+      if (dailyCount > 50 || dailyLimit > 50) {
+        $highVolumeWarning.style.display = 'block';
+      } else {
+        $highVolumeWarning.style.display = 'none';
       }
     }
 
