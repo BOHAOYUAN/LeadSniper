@@ -113,22 +113,3 @@ If you do not close at least one high-value client using LeadSniper within 30 da
 ## 📬 Contact & Support
 *   **Developer Team:** HY Digital Studio ([hy@hydigital.studio](mailto:hy@hydigital.studio))
 *   **Merchant Support:** Dodo Payments (support@dodopayments.com)
-
----
-
-## 👨‍💻 About the Developer
-
-<p align="center">
-  <img src="haoyuan.jpg" alt="Haoyuan Bo" width="130" style="border-radius: 50%;" />
-</p>
-
-Hi, I'm **Haoyuan Bo** (known as Bohao Yuan), a B2B growth engineer and the creator of LeadSniper. I specialize in building custom automation pipelines, browser extensions, and semantic search systems to help solo founders, digital agencies, and B2B sales teams streamline their outbound operations.
-
-If you have any feedback, custom feature requests, or need help setting up your outbound campaign, feel free to reach out to me directly!
-
-### Connect with Me:
-*   **LinkedIn:** [haoyuan-bo-127908392](https://www.linkedin.com/in/haoyuan-bo-127908392/)
-*   **Twitter/X:** [@bo_haoyuan94776](https://x.com/bo_haoyuan94776)
-*   **Reddit:** [Icy_Antelope_2961](https://www.reddit.com/user/Icy_Antelope_2961/)
-*   **Facebook:** [Haoyuan Bo](https://www.facebook.com/profile.php?id=100091837667555)
-*   **Email:** [haoyuanbo626@gmail.com](mailto:haoyuanbo626@gmail.com)

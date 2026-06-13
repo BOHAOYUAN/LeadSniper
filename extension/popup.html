@@ -640,9 +640,125 @@
     .limit-warning a:hover {
       text-decoration: underline;
     }
+
+    /* Pro Upgrade Modal */
+    .pro-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 1000000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .pro-modal {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      animation: modalFadeIn 0.2s ease-out;
+      position: relative;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .pro-modal-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1E293B;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .pro-modal-subtitle {
+      font-size: 10px;
+      color: #64748B;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .pro-feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: #F8FAFE;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #EFF3F8;
+    }
+    .pro-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 10px;
+      color: #334155;
+      line-height: 1.4;
+    }
+    .pro-feature-item i {
+      color: #10B981;
+      margin-top: 2px;
+    }
+    .pro-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .pro-modal-close:hover {
+      color: #1E293B;
+    }
   </style>
 </head>
 <body>
+<!-- Pro Upgrade Modal -->
+<div class="pro-modal-overlay" id="proModalOverlay">
+  <div class="pro-modal">
+    <button class="pro-modal-close" id="proModalClose"><i class="fas fa-times"></i></button>
+    <div class="pro-modal-title"><i class="fas fa-crown" style="color: #F59E0B;"></i> UPGRADE TO PRO ($588)</div>
+    <div class="pro-modal-subtitle">Lifetime access. Accelerate your pipeline.</div>
+    
+    <div class="scarcity-badge" style="margin-bottom: 12px;">
+      🔥 LTD PRO Upgrade: Only <span style="font-weight: 800;">7</span> lifetime seats left!
+    </div>
+
+    <div class="pro-feature-list">
+      <div class="pro-feature-item">
+        <i class="fas fa-check-circle"></i>
+        <span><b>Unlimited Daily Drafts:</b> No more 15/day limits. Auto-Pilot mode fully unlocked.</span>
+      </div>
+      <div class="pro-feature-item">
+        <i class="fas fa-check-circle"></i>
+        <span><b>3D Radar Dashboard:</b> Deep intent scoring & strategic intelligence panel.</span>
+      </div>
+      <div class="pro-feature-item">
+        <i class="fas fa-check-circle"></i>
+        <span><b>Ultra-Sniper Mode:</b> Background auto-capture of high-intent posts (≥80 score).</span>
+      </div>
+      <div class="pro-feature-item">
+        <i class="fas fa-check-circle"></i>
+        <span><b>12 Months Free Updates:</b> Includes new platforms & AI models. Optional renewal later.</span>
+      </div>
+      <div class="pro-feature-item">
+        <i class="fas fa-check-circle"></i>
+        <span><b>Priority Support & Setup:</b> 24h response + one free 1-on-1 configuration optimization.</span>
+      </div>
+    </div>
+
+    <button class="btn-solid" id="proModalCheckoutBtn" style="font-size: 12px; padding: 12px;">
+      PROCEED TO CHECKOUT <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
 <div class="leadsniper-card">
   <div class="scroll-area">
     <!-- Header: Tier + Security Indicators -->
@@ -712,6 +828,30 @@
           <input type="checkbox" id="muteSoundSwitch">
           <span class="checkbox-slider"></span>
         </label>
+      </div>
+
+      <!-- Ultra-Sniper Mode -->
+      <div style="margin-top: 10px; border-top: 1px solid #EFF3F8; padding-top: 10px;">
+        <div class="row-flex" style="margin-bottom: 6px;">
+          <label class="label-with-icon" style="color: #ff2e4c; font-weight: 800;"><i class="fas fa-skull-crossbones"></i> ULTRA-SNIPER MODE <span id="ultraSniperLock" style="color: #ef4444; font-size: 9px; display: none;">🔒</span></label>
+          <label class="checkbox-switch">
+            <input type="checkbox" id="ultraSniperSwitch">
+            <span class="checkbox-slider" style="border-color: #ff2e4c;"></span>
+          </label>
+        </div>
+        
+        <div id="ultraSniperWarning" style="display: none; background: #FFF1F2; border: 1px solid #FECDD3; padding: 8px; border-radius: 8px; font-size: 10px; color: #BE123C; line-height: 1.4; margin-bottom: 8px;">
+          ⚠️ <b>High-volume mode:</b> Auto-opens high-intent posts (≥ threshold) in background tabs without pausing scroll. May increase API costs and flag risk. <b>PRO ONLY</b>.
+        </div>
+        
+        <div id="ultraSniperSettings" class="row-flex" style="display: none; background: #F8FAFE; padding: 6px 8px; border-radius: 8px; margin-bottom: 0;">
+          <span class="label-with-icon" style="font-size: 9px;"><i class="fas fa-folder-open"></i> MAX AUTO-TABS / SESSION</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="decMaxTabsBtn" class="btn-outline-sm" style="padding: 1px 6px; font-size: 10px; font-weight: bold;">−</button>
+            <span id="maxTabsCount" style="font-weight: 800; min-width: 15px; text-align: center; font-size: 11px;">10</span>
+            <button id="incMaxTabsBtn" class="btn-outline-sm" style="padding: 1px 6px; font-size: 10px; font-weight: bold;">+</button>
+          </div>
+        </div>
       </div>
 
       <!-- Emergency SCRAM Controls -->

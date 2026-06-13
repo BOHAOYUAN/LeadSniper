@@ -11,7 +11,9 @@ const CONFIG = {
 let TOTAL_SCANNED = 0;
 let EXTENSION_ALIVE = true; // Guard against context invalidation
 let IS_MUTE_SOUND = false;
+let IS_ULTRA_SNIPER = false;
 let BLACKLIST_KEYWORDS = [];
+const PROCESSED_POSTS = new Set();
 
 function buildBlacklist(blacklistText) {
   if (!blacklistText) {
@@ -880,6 +882,7 @@ try {
     } else {
       stopAutoScroll();
     }
+    IS_ULTRA_SNIPER = res.leadsniper_ultra_sniper === true;
     IS_MUTE_SOUND = res.leadsniper_mute_sound === true;
     buildBlacklist(res.leadsniper_blacklist);
   });
@@ -918,6 +921,9 @@ try {
     }
     if (changes.leadsniper_mute_sound) {
       IS_MUTE_SOUND = changes.leadsniper_mute_sound.newValue === true;
+    }
+    if (changes.leadsniper_ultra_sniper) {
+      IS_ULTRA_SNIPER = changes.leadsniper_ultra_sniper.newValue === true;
     }
     if (changes.leadsniper_blacklist) {
       buildBlacklist(changes.leadsniper_blacklist.newValue);
@@ -965,6 +971,14 @@ function processPost(post) {
     authorBio = a.authorBio || "";
   } catch(e) {}
 
+  // Deduplication
+  const signature = `${authorName}:${text.substring(0, 50)}`;
+  if (PROCESSED_POSTS.has(signature)) {
+    post.setAttribute('data-ls', 'processed');
+    return 0;
+  }
+  PROCESSED_POSTS.add(signature);
+
   // Local Blacklist Filter
   if (BLACKLIST_KEYWORDS.length > 0) {
     const lowerText = text.toLowerCase();
@@ -993,7 +1007,14 @@ function processPost(post) {
 
   console.log(`[LeadSniper] >> AI: ${authorName} (${text.substring(0, 40)}...)`);
 
-  safeSendMessage({ type: 'ANALYZE_POST', id: postId, text, authorName, profileUrl, authorBio }, (response) => {
+  // Try to find the post url
+  let postUrl = profileUrl;
+  if (PLATFORM === 'X') {
+    const timeLink = post.querySelector('a[href*="/status/"]');
+    if (timeLink) postUrl = timeLink.href;
+  }
+
+  safeSendMessage({ type: 'ANALYZE_POST', id: postId, text, authorName, profileUrl, postUrl, authorBio, ultraSniper: IS_ULTRA_SNIPER }, (response) => {
     TOTAL_SCANNED++;
     if (!response || response.error) {
       post.style.borderLeft = "2px solid #666";
@@ -1059,9 +1080,14 @@ function processPost(post) {
 
       // AUTO-HUNTER LOCK TRIGGER
       if (IS_AUTO_HUNTER && response.Confidence_Score >= 85) {
-        IS_SCROLL_PAUSED = true;
-        playRadarLockBeep();
-        showLockBanner(postId, response.Confidence_Score, authorName, text);
+        if (!IS_ULTRA_SNIPER) {
+          IS_SCROLL_PAUSED = true;
+          playRadarLockBeep();
+          showLockBanner(postId, response.Confidence_Score, authorName, text);
+        } else {
+          console.log('[LeadSniper] Ultra-Sniper mode: High intent target locked, bypassing scroll pause.');
+          playRadarLockBeep(); // Still beep, but keep going
+        }
       }
     } else {
       post.setAttribute('data-ls', 'news'); // Use 'news' as the catch-all blue class

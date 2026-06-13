@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeadSniper — Elite B2B Social Lead Intent Radar & AI Outreach</title>
+  <meta name="description" content="Stop cold emailing dead databases. Scan real-time social signals on Twitter, LinkedIn & Reddit, lock high-intent buyers, and generate custom AI outreach drafts on autopilot.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ═══════════ DESIGN SYSTEM & VARIABLES ═══════════ */
+    :root {
+      --bg-dark: #070913;
+      --bg-surface: #0f1322;
+      --bg-card: #151b30;
+      --border-color: rgba(255, 255, 255, 0.07);
+      --border-glow: rgba(59, 130, 246, 0.15);
+      
+      --accent-blue: #3b82f6;
+      --accent-blue-hover: #2563eb;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-amber-hover: #d97706;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dark: #6b7280;
+      
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-hud: 'Outfit', sans-serif;
+      
+      --shadow-glow: 0 0 25px rgba(59, 130, 246, 0.18);
+      --shadow-green-glow: 0 0 20px rgba(16, 185, 129, 0.15);
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ═══════════ BASE STYLES ═══════════ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f293d;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-blue);
+    }
+
+    /* ═══════════ UTILITIES & LAYOUT ═══════════ */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .glass {
+      background: rgba(15, 19, 34, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      border: none;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--accent-blue-hover);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .btn-amber {
+      background: var(--accent-amber);
+      color: #070913;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    .btn-amber:hover {
+      background: var(--accent-amber-hover);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .badge-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      padding: 6px 14px;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* ═══════════ NAVIGATION HEADER ═══════════ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.3s;
+    }
+    
+    .nav-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 80px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-hud);
+      font-weight: 900;
+      font-size: 22px;
+      color: var(--text-main);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo i {
+      color: var(--accent-blue);
+      filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6));
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    @media (max-width: 768px) {
+      nav {
+        display: none; /* simple responsive toggle */
+      }
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--text-main);
+    }
+
+    /* ═══════════ HERO SECTION ═══════════ */
+    .hero-section {
+      position: relative;
+      padding: 80px 0 120px;
+      background: radial-gradient(circle at 75% 30%, rgba(59, 130, 246, 0.07) 0%, transparent 55%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+    }
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 60px;
+      }
+    }
+
+    .hero-content h1 {
+      font-family: var(--font-hud);
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      margin-top: 18px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 640px) {
+      .hero-content h1 {
+        font-size: 36px;
+      }
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-content p {
+      font-size: 17px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      max-width: 600px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .hero-bullets {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-bullet-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-main);
+    }
+    .hero-bullet-item i {
+      color: var(--accent-green);
+    }
+
+    /* ═══════════ INTERACTIVE RADAR DEMO WIDGET ═══════════ */
+    .demo-container {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      background: #0d111d;
+    }
+    
+    .demo-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 19, 34, 0.9);
+    }
+
+    .demo-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .demo-status-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-light 1.8s infinite;
+    }
+    @keyframes pulse-light {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.5; }
+    }
+
+    .demo-status-text {
+      font-family: var(--font-hud);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: var(--accent-green);
+      text-transform: uppercase;
+    }
+
+    .demo-title {
+      font-family: var(--font-hud);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .demo-body {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      min-height: 400px;
+    }
+    @media (max-width: 640px) {
+      .demo-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Radar Screen */
+    .radar-screen-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #0e1324 0%, #080a13 100%);
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+    }
+    @media (max-width: 640px) {
+      .radar-screen-wrap {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        height: 300px;
+      }
+    }
+
+    #radarCanvas {
+      max-width: 100%;
+      aspect-ratio: 1;
+      cursor: crosshair;
+    }
+
+    .radar-watermark {
+      position: absolute;
+      bottom: 14px;
+      font-family: var(--font-hud);
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Target Console HUD */
+    .hud-console {
+      display: flex;
+      flex-direction: column;
+      background: #0f1322;
+      padding: 20px;
+    }
+
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .hud-profile-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hud-target-name {
+      font-family: var(--font-hud);
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hud-target-platform {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* SVG Intent Score Gauge */
+    .score-gauge-wrap {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-gauge-ring {
+      transform: rotate(-90deg);
+    }
+    .score-gauge-circle {
+      stroke-dasharray: 113.1; /* 2 * PI * 18 */
+      stroke-dashoffset: 113.1;
+      transition: stroke-dashoffset 0.4s ease;
+      stroke-linecap: round;
+    }
+    .score-gauge-text {
+      position: absolute;
+      font-family: var(--font-hud);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .hud-section {
+      margin-bottom: 16px;
+    }
+    .hud-section-title {
+      font-family: var(--font-hud);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .hud-reasoning-box {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      line-height: 1.4;
+    }
+
+    .hud-bio-box {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .hud-bio-box strong {
+      color: var(--text-main);
+    }
+
+    /* Outreach Tabs styling */
+    .hud-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .hud-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .hud-tab-btn.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+    }
+
+    .hud-draft-container {
+      position: relative;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .hud-draft-body {
+      flex-grow: 1;
+      font-size: 12px;
+      color: var(--text-main);
+      background: #0b0e18;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      padding: 12px;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+
+    .hud-draft-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .hud-draft-helper {
+      font-size: 10px;
+      color: var(--text-dark);
+      font-style: italic;
+    }
+
+    .btn-copy-hud {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+    .btn-copy-hud:hover {
+      background: var(--accent-blue-hover);
+    }
+
+    /* Toast popup alert */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #10b981;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 10000;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ═══════════ PAIN VS AUTOMATION SECTION ═══════════ */
+    .comparison-section {
+      padding: 100px 0;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, #0a0d1a 100%);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 60px;
+    }
+    .section-header h2 {
+      font-family: var(--font-hud);
+      font-size: 36px;
+      font-weight: 900;
+      margin-top: 12px;
+      letter-spacing: -1px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    
+    .comparison-table th {
+      background: rgba(15, 19, 34, 0.9);
+      padding: 18px 24px;
+      font-family: var(--font-hud);
+      font-size: 14px;
+      font-weight: 800;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .comparison-table td {
+      padding: 16px 24px;
+      font-size: 14px;
+      background: rgba(15, 19, 34, 0.4);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .comparison-table tr:hover td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .col-label {
+      font-weight: 600;
+      color: var(--text-main);
+      width: 25%;
+    }
+    .col-old {
+      color: var(--text-muted);
+      width: 37.5%;
+    }
+    .col-new {
+      color: #ffffff;
+      width: 37.5%;
+      background: rgba(59, 130, 246, 0.03) !important;
+      font-weight: 500;
+    }
+    .col-new i {
+      color: var(--accent-green);
+      margin-right: 6px;
+    }
+    .col-old i {
+      color: var(--accent-red);
+      margin-right: 6px;
+    }
+
+    @media (max-width: 640px) {
+      .comparison-table {
+        display: block;
+      }
+      .comparison-table thead {
+        display: none;
+      }
+      .comparison-table tbody, .comparison-table tr, .comparison-table td {
+        display: block;
+        width: 100% !important;
+      }
+      .comparison-table tr {
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 0;
+      }
+      .comparison-table td {
+        border-bottom: none;
+        padding: 4px 16px;
+      }
+      .col-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--accent-blue);
+      }
+      .col-old::before {
+        content: "Manual Grind: ";
+        font-weight: bold;
+        color: var(--text-dark);
+      }
+      .col-new::before {
+        content: "LeadSniper Auto: ";
+        font-weight: bold;
+        color: var(--accent-green);
+      }
+    }
+
+    /* ═══════════ CORE CAPABILITIES FEATURE GRID ═══════════ */
+    .features-section {
+      padding: 100px 0;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+    }
+
+    .feature-card {
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+      box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.1);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon-box {
+      width: 48px;
+      height: 48px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent-blue);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-hud);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ═══════════ PRICING GRID SECTION ═══════════ */
+    .pricing-section {
+      padding: 100px 0;
+      background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .scarcity-banner-wrap {
+      max-width: 600px;
+      margin: -20px auto 40px;
+      text-align: center;
+    }
+    
+    .scarcity-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--accent-red);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-family: var(--font-hud);
+      animation: pulse-red 2.5s infinite;
+    }
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 480px));
+      gap: 30px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+    @media (max-width: 768px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 40px auto 0;
+      }
+    }
+
+    .pricing-card {
+      border-radius: 24px;
+      padding: 40px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      transition: all 0.3s;
+    }
+    .pricing-card.premium {
+      border-color: rgba(245, 158, 11, 0.3);
+      background: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.04) 0%, rgba(15, 19, 34, 0.8) 100%);
+      box-shadow: 0 15px 40px -15px rgba(245, 158, 11, 0.1);
+    }
+    .pricing-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+    
+    .pricing-badge {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-family: var(--font-hud);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      padding: 4px 10px;
+      border-radius: 30px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .price-tier {
+      font-family: var(--font-hud);
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    
+    .price-value {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .price-amount {
+      font-family: var(--font-hud);
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+    .price-period {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .price-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      min-height: 42px;
+    }
+
+    .price-features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+      flex-grow: 1;
+    }
+
+    .price-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+    .price-feature-item i {
+      color: var(--accent-green);
+      margin-top: 3px;
+    }
+    
+    .price-feature-item.highlight i {
+      color: var(--accent-amber);
+    }
+    
+    .price-byok-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dark);
+      margin-top: 14px;
+      font-weight: 500;
+    }
+
+    /* ═══════════ GUARANTEE & FAQ SECTION ═══════════ */
+    .guarantee-box {
+      border-radius: 20px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 30px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+    @media (max-width: 640px) {
+      .guarantee-box {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+    .guarantee-icon {
+      font-size: 56px;
+      color: var(--accent-amber);
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+    }
+    .guarantee-title {
+      font-family: var(--font-hud);
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .guarantee-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .faq-accordion {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: rgba(15, 19, 34, 0.4);
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    
+    .faq-question {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 20px;
+      font-family: var(--font-hud);
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .faq-question i {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease-out;
+    }
+    
+    .faq-answer-inner {
+      padding: 0 20px 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+      border-top: 1px solid transparent;
+    }
+
+    /* Active state classes handled via JS */
+    .faq-item.active {
+      border-color: rgba(59, 130, 246, 0.25);
+      background: rgba(15, 19, 34, 0.8);
+    }
+    .faq-item.active .faq-question i {
+      transform: rotate(180deg);
+      color: var(--accent-blue);
+    }
+    .faq-item.active .faq-answer-inner {
+      border-top-color: var(--border-color);
+    }
+
+    /* ═══════════ FOOTER ═══════════ */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 60px 0 40px;
+      background: #04060c;
+    }
+
+    .footer-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .footer-wrap {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--text-dark);
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+    }
+    .footer-link {
+      color: var(--text-dark);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-link:hover {
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header class="glass">
+    <div class="container nav-wrap">
+      <a href="#" class="logo">
+        <i class="fas fa-crosshairs"></i> LeadSniper
+      </a>
+      <nav>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#demo" class="nav-link">Live Radar Demo</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+        <a href="#faqs" class="nav-link">FAQs</a>
+      </nav>
+      <a href="#pricing" class="btn btn-outline" style="font-size: 12px; padding: 8px 16px;">
+        <i class="fas fa-download"></i> Get Extension
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-grid">
+      <!-- Hero Copy -->
+      <div class="hero-content">
+        <div class="badge-outline">
+          <i class="fas fa-satellite-dish"></i> Real-time social signal acquisition
+        </div>
+        <h1 class="gradient-text">Stop cold emailing dead databases. Hunt high-intent buyers.</h1>
+        <p>LeadSniper runs silently in your browser, acts as an active signal intelligence radar on Twitter, LinkedIn & Reddit, and transforms a 5-minute manual sales grind into a 3-second, one-click workflow.</p>
+        <div class="hero-ctas">
+          <a href="#pricing" class="btn btn-primary" id="heroBuyBtn">
+             Claim Early LTD Spot <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="https://youtu.be/F9PbqSR6PN4" target="_blank" class="btn btn-outline">
+            <i class="fas fa-play"></i> Watch 60s Demo
+          </a>
+        </div>
+        <div class="hero-bullets">
+          <div class="hero-bullet-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Instant intent qualification based on your exact target niche.</span>
+          </div>
+          <div class="hero-bullet-item">
+            <i class="fas fa-check-circle"></i>
+            <span>"Lethal Rules" filters automatically weed out newsletter/promo spam.</span>
+          </div>
+          <div class="hero-bullet-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Generates 3 customized reply hooks (Professional, Humor, Director).</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Interactive Radar Widget -->
+      <div class="demo-container" id="demo">
+        <div class="demo-header">
+          <div class="demo-title">
+            <i class="fas fa-satellite"></i>
+            <span>LeadSniper Tactical HUD v3.0</span>
+          </div>
+          <div class="demo-status">
+            <span class="demo-status-pulse"></span>
+            <span class="demo-status-text">Scanning Active</span>
+          </div>
+        </div>
+        <div class="demo-body">
+          <!-- Radar Canvas Grid -->
+          <div class="radar-screen-wrap">
+            <canvas id="radarCanvas" width="300" height="300"></canvas>
+            <div class="radar-watermark">Range: 200m</div>
+          </div>
+          
+          <!-- HUD Command Panel -->
+          <div class="hud-console">
+            <div class="hud-header">
+              <div class="hud-profile-info">
+                <span class="hud-target-name" id="hudName">Target Acquiring...</span>
+                <span class="hud-target-platform" id="hudPlatform">Waiting for scan</span>
+              </div>
+              <div class="score-gauge-wrap">
+                <svg class="score-gauge-ring" width="48" height="48">
+                  <circle stroke="rgba(255,255,255,0.05)" stroke-width="4" fill="transparent" r="18" cx="24" cy="24"/>
+                  <circle id="hudScoreCircle" stroke="var(--accent-blue)" stroke-width="4" fill="transparent" r="18" cx="24" cy="24" class="score-gauge-circle"/>
+                </svg>
+                <div class="score-gauge-text" id="hudScore">--</div>
+              </div>
+            </div>
+
+            <!-- Strategic Reasoning -->
+            <div class="hud-section">
+              <div class="hud-section-title"><i class="fas fa-brain"></i> Strategic Qualification</div>
+              <div class="hud-reasoning-box" id="hudReason">
+                Hover or click any target node on the active radar scanning grid to retrieve intent reasoning data.
+              </div>
+            </div>
+
+            <!-- Profile Summary -->
+            <div class="hud-section" style="margin-bottom: 20px;">
+              <div class="hud-section-title"><i class="fas fa-user-tag"></i> Profile Enriched Data</div>
+              <div class="hud-bio-box" id="hudBio">
+                Please lock target to extract biographical records.
+              </div>
+            </div>
+
+            <!-- Reply Copy Area -->
+            <div class="hud-section" style="flex-grow: 1; display: flex; flex-direction: column; margin-bottom: 0;">
+              <div class="hud-section-title"><i class="fas fa-comment-dots"></i> Contextual AI Drafts</div>
+              <div class="hud-tabs">
+                <button class="hud-tab-btn active" data-tab="Professional">Professional</button>
+                <button class="hud-tab-btn" data-tab="Humor">Humor</button>
+                <button class="hud-tab-btn" data-tab="Director">Director</button>
+              </div>
+              <div class="hud-draft-container">
+                <div class="hud-draft-body" id="hudDraft">Select a target to preview outbound drafts.</div>
+                <div class="hud-draft-actions">
+                  <span class="hud-draft-helper" id="hudHelper">Click "Copy Reply" to fill social box</span>
+                  <button class="btn-copy-hud" id="hudCopyBtn"><i class="fas fa-copy"></i> Copy Reply</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pain Points vs. LeadSniper Automation -->
+  <section class="comparison-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-outline"><i class="fas fa-balance-scale"></i> Efficiency Comparison</span>
+        <h2>Why Solopreneurs & Agencies Love Us</h2>
+      </div>
+      
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th class="col-label">Outbound Pipeline</th>
+            <th class="col-old" style="color: var(--accent-red);">The Manual Grind (No Radar)</th>
+            <th class="col-new" style="color: var(--accent-green); background: rgba(59, 130, 246, 0.05) !important;">LeadSniper Strategy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-label">Lead Discovery</td>
+            <td class="col-old"><i class="fas fa-times-circle"></i> Scroll feeds endlessly, parsing lists, and checking bios manually.</td>
+            <td class="col-new"><i class="fas fa-check-circle"></i> Concentric radar highlights active social triggers instantly.</td>
+          </tr>
+          <tr>
+            <td class="col-label">Intent Qualification</td>
+            <td class="col-old"><i class="fas fa-times-circle"></i> Guess intent based on titles. Waste hours on dead threads.</td>
+            <td class="col-new"><i class="fas fa-check-circle"></i> Real-time 0-100 scoring based on custom search niche.</td>
+          </tr>
+          <tr>
+            <td class="col-label">outbox Filter</td>
+            <td class="col-old"><i class="fas fa-times-circle"></i> Sift through affiliate threads, newsletters, and promo spam.</td>
+            <td class="col-new"><i class="fas fa-check-circle"></i> Lethal Rules filters self-promoters and garbage newsletter links.</td>
+          </tr>
+          <tr>
+            <td class="col-label">Draft Personalization</td>
+            <td class="col-old"><i class="fas fa-times-circle"></i> Wait 3-5 mins drafting manual replies or feeding GPT.</td>
+            <td class="col-new"><i class="fas fa-check-circle"></i> 3 distinct outreach styles tailored to context in 3 seconds.</td>
+          </tr>
+          <tr>
+            <td class="col-label">CRM Sync</td>
+            <td class="col-old"><i class="fas fa-times-circle"></i> Copy-paste author details, URLs, and logs to Notion.</td>
+            <td class="col-new"><i class="fas fa-check-circle"></i> Sync lead bio and AI outreach logs in one click via Webhooks.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Core Capabilities Section -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-outline"><i class="fas fa-rocket"></i> Product Capabilities</span>
+        <h2>High-Velocity Pipeline Toolset</h2>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-bullseye"></i></div>
+          <h3>3D Concentric Radar UI</h3>
+          <p>Organize social leads visually by priority and platform channels. Tap any item inside the radar grid to directly scroll your active social feed tab to their exact post.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-brain"></i></div>
+          <h3>Custom Target Calibrator</h3>
+          <p>Input your target audience criteria, set minimum intent thresholds (0-100), and let the local scoring engine qualify contacts using DeepSeek V3 or OpenAI with zero markup.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-bolt"></i></div>
+          <h3>Ultra-Sniper Background Auto-Capture</h3>
+          <p>Unleash the ultimate Pro automation. Let the extension scroll page feeds silently, evaluate posts, and automatically stack hot targets (score ≥80) in the snipe queue without pausing.</p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-filter"></i></div>
+          <h3>"Lethal Rules" Filters</h3>
+          <p>Automatically weed out self-promotional "expert threads", newsletters, and bot pitches. Save valuable API tokens and outbound energy on genuine prospects only.</p>
+        </div>
+        <!-- Feature 5 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-comment-medical"></i></div>
+          <h3>Multi-Strategy Outbox</h3>
+          <p>Switch Outreach tactics instantly. Choose Professional for corporate, Humor for breaking patterns, and Director for value-first storytelling. Insert with a single click.</p>
+        </div>
+        <!-- Feature 6 -->
+        <div class="feature-card glass">
+          <div class="feature-icon-box"><i class="fas fa-plug"></i></div>
+          <h3>CRM Integration & Webhooks</h3>
+          <p>Connect seamlessly to Notion, Airtable, or CRMs using direct webhooks. Log handles, post URLs, and chosen outreach drafts to build a unified conversion tracker.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Grid Section -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-outline"><i class="fas fa-tags"></i> Early Adopter Pricing</span>
+        <h2>Choose Your Growth Velocity</h2>
+        <p style="margin-top: 14px; font-size: 15px;">Secure lifetime buy-out rates before we transition to a subscription pricing plan ($49/mo and $99/mo).</p>
+      </div>
+
+      <!-- Scarcity Indicator -->
+      <div class="scarcity-banner-wrap">
+        <span class="scarcity-pill">
+          <i class="fas fa-exclamation-triangle"></i> LTD PRO TIER: Only 7 lifetime seats left!
+        </span>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Basic Card -->
+        <div class="pricing-card glass">
+          <div class="price-tier">LTD Basic</div>
+          <div class="price-value">
+            <span class="price-amount">$199</span>
+            <span class="price-period">/ lifetime access</span>
+          </div>
+          <p class="price-desc">Perfect for solo founders and developers testing automated social sales loops.</p>
+          
+          <ul class="price-features-list">
+            <li class="price-feature-item">
+              <i class="fas fa-check"></i>
+              <span><b>Auto-Hunter Mode:</b> Automatic scrolling & signal scanning</span>
+            </li>
+            <li class="price-feature-item">
+              <i class="fas fa-check"></i>
+              <span><b>15 Daily Drafts:</b> AI-generated outreach templates</span>
+            </li>
+            <li class="price-feature-item">
+              <i class="fas fa-check"></i>
+              <span><b>12 Months Free Updates:</b> Core platform features and patches</span>
+            </li>
+          </ul>
+
+          <a href="#" class="btn btn-outline" style="width: 100%;" id="basicBuyBtn">
+            Claim Basic LTD <i class="fas fa-arrow-right"></i>
+          </a>
+          <div class="price-byok-note">BYOK (Bring Your Own Key) model enabled.</div>
+        </div>
+
+        <!-- Pro Card -->
+        <div class="pricing-card glass premium">
+          <div class="pricing-badge"><i class="fas fa-star"></i> Recommended</div>
+          <div class="price-tier" style="color: var(--accent-amber);">LTD Pro</div>
+          <div class="price-value">
+            <span class="price-amount">$588</span>
+            <span class="price-period">/ lifetime access</span>
+          </div>
+          <p class="price-desc">Built for aggressive growth hackers, digital agencies, and B2B outreach directors.</p>
+          
+          <ul class="price-features-list">
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>Unlimited Daily Drafts</b> with auto-filling controls</span>
+            </li>
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>3D Concentric Radar Grid</b> with intent scoring telemetry</span>
+            </li>
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>Ultra-Sniper Mode:</b> Background auto-queueing of intent posts (≥80)</span>
+            </li>
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>Priority Support:</b> Direct founder pipeline & 24h response time</span>
+            </li>
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>12 Months Free Updates:</b> Covers new platforms and AI model integrations. <i>After 12 months, software continues working indefinitely. Renew updates at 20% or stay on the last version forever.</i></span>
+            </li>
+            <li class="price-feature-item highlight">
+              <i class="fas fa-check-circle"></i>
+              <span><b>Founder Configuration Audit:</b> Free 1-on-1 niche setup coaching session (Value $99)</span>
+            </li>
+          </ul>
+
+          <a href="#" class="btn btn-amber" style="width: 100%; font-size: 15px;" id="proBuyBtn">
+            Get Pro Lifetime Access <i class="fas fa-crown"></i>
+          </a>
+          <div class="price-byok-note">BYOK (Bring Your Own Key) model enabled.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Risk-Free Guarantee & FAQs Section -->
+  <section class="container" style="padding: 100px 0 120px;" id="faqs">
+    <!-- Guarantee Box -->
+    <div class="guarantee-box glass">
+      <div class="guarantee-icon"><i class="fas fa-shield-halved"></i></div>
+      <div>
+        <h3 class="guarantee-title">🔒 Risk-Free 30-Day Client-Closing Guarantee</h3>
+        <p class="guarantee-desc">We build tools to generate pipeline revenue. If you do not close at least one high-value client using LeadSniper within 30 days of setup, email us at <b>hy@hydigital.studio</b> and we will refund 100% of your purchase. No questions asked.</p>
+      </div>
+    </div>
+
+    <!-- FAQs Accordion -->
+    <div class="section-header">
+      <span class="badge-outline"><i class="fas fa-circle-question"></i> Sourcing Assistance</span>
+      <h2>Frequently Asked Questions</h2>
+    </div>
+
+    <div class="faq-accordion">
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>What is the BYOK (Bring Your Own Key) pricing model?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            To keep your software purchase a one-time lifetime fee, we do not mark up AI query costs. Instead, you paste your own OpenAI or DeepSeek API key into the configuration box. You only pay exact market rates directly to the AI providers (averaging pennies per 1,000 scans).
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>Will using LeadSniper flag my social accounts?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            LeadSniper is built with safety as a top priority. It executes standard page scans client-side directly on your browser tab, simulating random scrolling speeds and keyboard delays. It does not issue high-volume automated requests or headless API browser scripts, making it safe for daily outbound operations.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>What happens after the 12-month free update period?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Your software purchase keeps working indefinitely. After 12 months, if you wish to receive another year of new updates (such as adaptations for new social channel layouts, new platform integrations, and advanced model releases), you can renew updates at a discounted rate of 20% of your original purchase price. Otherwise, you can stay on your last version forever.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>How does the 1-on-1 configuration audit session work?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            After purchasing the LTD PRO license, you will receive an invitation link to schedule a direct session with our tech team. We will review your target niche description, test and calibrate your scoring filter metrics, and optimize your outreach prompts to ensure you acquire only high-intent buyers.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-wrap">
+      <div class="footer-text">
+        © 2026 LeadSniper. Tactical outbound solutions by <a href="mailto:hy@hydigital.studio" style="color: var(--text-muted); text-decoration: none;">hy@hydigital.studio</a>.
+      </div>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <a href="#" class="footer-link">Terms of Service</a>
+        <a href="mailto:hy@hydigital.studio" class="footer-link">Support & Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="copyToast">
+    <i class="fas fa-circle-check"></i>
+    <span>Reply template copied and loaded to clipboard!</span>
+  </div>
+
+  <!-- ═══════════ INTERACTIVE RADAR WIDGET SCRIPT ═══════════ -->
+  <script>
+    // 1. Data Targets
+    const targets = [
+      {
+        id: 0,
+        name: "Alex Rivera",
+        platform: "LinkedIn",
+        platformIcon: "fa-linkedin",
+        platformColor: "#0a66c2",
+        score: 96,
+        x: 0.25, // Normalized radar coordinates from center
+        y: -0.4,
+        org: "Rivera SaaS Ventures (CEO)",
+        bio: "Founder & CEO. Sourcing automated B2B outbound engines that don't trigger domain spam blockers. High acquisition intent.",
+        reason: "Explicit keyword match: Sourcing high-intent lead software. Explicitly complaining about database deliverability.",
+        drafts: {
+          Professional: "Hello Alex, saw your interest in outbound automation. We've built an intent-based chrome overlay that bypasses standard email deliverability bottlenecks by targeting active social signals. Let's connect.",
+          Humor: "Hey Alex, saw you're hunting for outreach tools that don't end up in spam. Our radar finds hot leads on LinkedIn before they convert to newsletters. No markups, no API markups, just pure signals.",
+          Director: "Alex, standard sales pipelines are breaking down. LeadSniper acts as tactical signal intelligence, turning a 5-minute search into a 3-second snipe. Let's scale your operations."
+        }
+      },
+      {
+        id: 1,
+        name: "Sarah Jenkins",
+        platform: "X (Twitter)",
+        platformIcon: "fa-twitter",
+        platformColor: "#1da1f2",
+        score: 89,
+        x: -0.5,
+        y: 0.35,
+        org: "GrowthOps Consulting",
+        bio: "Growth marketer helping B2B companies scale LinkedIn and Twitter acquisition. Ex-HubSpot. Heavy outreach practitioner.",
+        reason: "Active workflow pain point: Spending 4+ hours daily on manual scrolling and copy-pasting lead templates.",
+        drafts: {
+          Professional: "Hi Sarah, saw your breakdown of B2B prospecting hours. LeadSniper runs directly in your browser, automating lead scoring and personalizing drafts in one click. Would love to show you a quick demo.",
+          Humor: "Sarah, 4 hours a day on copy-paste is a manual labor crime. Let's let the browser extension do the heavy lifting while you focus on closing. We support LinkedIn, Twitter, and Reddit.",
+          Director: "Sarah, automation isn't about replacing the human; it's about magnifying their output. Let's turn those 4 hours of copy-pasting into 4 minutes of tactical validation."
+        }
+      },
+      {
+        id: 2,
+        name: "David Chen",
+        platform: "Reddit",
+        platformIcon: "fa-reddit-alien",
+        platformColor: "#ff4500",
+        score: 82,
+        x: 0.45,
+        y: 0.5,
+        org: "CloudMetrics AI",
+        bio: "Indie hacker. Launching a new developer tool for PostgreSQL metrics monitoring. Seeking low-budget initial users.",
+        reason: "Asking on r/sales how to source developer leads who are actively discussing scaling pain points online.",
+        drafts: {
+          Professional: "Hi David, saw your post on r/sales. Solopreneurs use LeadSniper to identify developers discussing database bottlenecks on Twitter & Reddit, allowing you to reach out when intent is highest.",
+          Humor: "David, cold emailing database devs is like trying to explain SQL to a cat. Let's sniper-target engineers who are actually complaining about database speed right now.",
+          Director: "David, the first 100 users are closed via context, not ads. Let's find your core champions on active channels and write the exact value-first message they need to read."
+        }
+      },
+      {
+        id: 3,
+        name: "Elena Rostova",
+        platform: "LinkedIn",
+        platformIcon: "fa-linkedin",
+        platformColor: "#0a66c2",
+        score: 72,
+        x: -0.3,
+        y: -0.6,
+        org: "Nordic Tech Labs",
+        bio: "Talent Acquisition Director. Sourcing senior Rust developers for cloud engineering projects.",
+        reason: "Friction with agency recruiting fee markups. Looking for direct social-scraping and automated candidate qualification tools.",
+        drafts: {
+          Professional: "Hello Elena, we noticed your post on agency fees. LeadSniper helps in sourcing high-intent technical talent active in specialized social communities with direct, personalized pitches.",
+          Humor: "Elena, bypass the recruiter fee tax. Find developers who are sharing side projects online and snipe them with tailored outreaches before agencies charge you 20% of their salary.",
+          Director: "Elena, talent acquisition is a game of direct relevance. Let's build a bridge between active developers and your hiring pipeline with targeted, context-rich outreach."
+        }
+      }
+    ];
+
+    let selectedTargetId = 0;
+    let selectedTab = "Professional";
+
+    // 2. DOM Elements
+    const canvas = document.getElementById("radarCanvas");
+    const ctx = canvas.getContext("2d");
+    const hudName = document.getElementById("hudName");
+    const hudPlatform = document.getElementById("hudPlatform");
+    const hudScore = document.getElementById("hudScore");
+    const hudScoreCircle = document.getElementById("hudScoreCircle");
+    const hudReason = document.getElementById("hudReason");
+    const hudBio = document.getElementById("hudBio");
+    const hudDraft = document.getElementById("hudDraft");
+    const hudCopyBtn = document.getElementById("hudCopyBtn");
+    const copyToast = document.getElementById("copyToast");
+
+    // 3. Setup canvas sizing
+    let width = canvas.width;
+    let height = canvas.height;
+    let centerX = width / 2;
+    let centerY = height / 2;
+    let maxRadius = Math.min(centerX, centerY) - 10;
+
+    // 4. Radar Animation state
+    let sweepAngle = 0;
+    const sweepSpeed = 0.012; // Radians per frame
+
+    function drawRadar() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw dark grid background
+      ctx.fillStyle = "rgba(11, 15, 25, 0.4)";
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw concentric radar circles
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.12)";
+      ctx.lineWidth = 1;
+      
+      const rings = [0.25, 0.5, 0.75, 1];
+      rings.forEach(r => {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, maxRadius * r, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // Draw concentric radar dashes
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.08)";
+      ctx.setLineDash([4, 6]);
+      const dashRings = [0.37, 0.62, 0.87];
+      dashRings.forEach(r => {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, maxRadius * r, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      // Draw radar crosshairs (axes)
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.15)";
+      ctx.beginPath();
+      ctx.moveTo(centerX - maxRadius, centerY);
+      ctx.lineTo(centerX + maxRadius, centerY);
+      ctx.moveTo(centerX, centerY - maxRadius);
+      ctx.lineTo(centerX, centerY + maxRadius);
+      ctx.stroke();
+
+      // Draw sweep beam line (with tail gradient)
+      sweepAngle += sweepSpeed;
+      if (sweepAngle >= Math.PI * 2) sweepAngle = 0;
+
+      const segments = 60;
+      for (let i = 0; i < segments; i++) {
+        const angle = sweepAngle - (i * 0.025);
+        const alpha = (1 - (i / segments)) * 0.22;
+        
+        ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(
+          centerX + Math.cos(angle) * maxRadius,
+          centerY + Math.sin(angle) * maxRadius
+        );
+        ctx.stroke();
+      }
+
+      // Draw active sweeping line edge
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.75)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(
+        centerX + Math.cos(sweepAngle) * maxRadius,
+        centerY + Math.sin(sweepAngle) * maxRadius
+      );
+      ctx.stroke();
+
+      // Draw Targets
+      targets.forEach(t => {
+        const targetX = centerX + t.x * maxRadius;
+        const targetY = centerY + t.y * maxRadius;
+        
+        // Calculate target angle relative to center
+        let targetAngle = Math.atan2(t.y, t.x);
+        if (targetAngle < 0) targetAngle += Math.PI * 2;
+
+        // Calculate angular distance to sweep beam to simulate "radar ping sweep flash"
+        let angleDiff = Math.abs(sweepAngle - targetAngle);
+        if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+
+        // Pulse intensity based on proximity to the sweeping line
+        let pulseIntensity = 0;
+        if (angleDiff < 0.8) {
+          pulseIntensity = (1 - angleDiff / 0.8) * 1.5;
+        }
+
+        // Draw selection highlight if selected
+        const isSelected = t.id === selectedTargetId;
+        if (isSelected) {
+          ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(targetX, targetY, 12 + Math.sin(Date.now() / 150) * 2, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Draw tiny target crosshair lines
+          ctx.beginPath();
+          ctx.moveTo(targetX - 16, targetY);
+          ctx.lineTo(targetX - 8, targetY);
+          ctx.moveTo(targetX + 8, targetY);
+          ctx.lineTo(targetX + 16, targetY);
+          ctx.moveTo(targetX, targetY - 16);
+          ctx.lineTo(targetX, targetY - 8);
+          ctx.moveTo(targetX, targetY + 8);
+          ctx.lineTo(targetX, targetY + 16);
+          ctx.stroke();
+        }
+
+        // Pulse rings
+        const dotPulse = Math.sin(Date.now() / 200 + t.id * 10) * 3 + pulseIntensity * 6;
+        ctx.fillStyle = t.score >= 80 ? `rgba(239, 68, 68, ${0.15 + pulseIntensity * 0.2})` : `rgba(59, 130, 246, ${0.15 + pulseIntensity * 0.2})`;
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, 6 + dotPulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core dot
+        ctx.fillStyle = t.score >= 80 ? "rgba(239, 68, 68, 0.95)" : "rgba(59, 130, 246, 0.95)";
+        if (isSelected) ctx.fillStyle = "rgba(245, 158, 11, 0.95)";
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // White small center
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Score Text Label near target dot
+        ctx.fillStyle = isSelected ? "rgba(245, 158, 11, 0.95)" : "rgba(255, 255, 255, 0.6)";
+        ctx.font = "bold 9px 'Outfit', sans-serif";
+        ctx.fillText(t.score, targetX + 8, targetY - 4);
+      });
+
+      requestAnimationFrame(drawRadar);
+    }
+
+    // 5. Click Handling on Radar Nodes
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Translate coordinates to match internal canvas scale
+      const scaleX = width / rect.width;
+      const scaleY = height / rect.height;
+      const x = clickX * scaleX;
+      const y = clickY * scaleY;
+
+      // Find closest node within target zone
+      let closestTarget = null;
+      let minDistance = 20; // Hitbox radius
+
+      targets.forEach(t => {
+        const targetX = centerX + t.x * maxRadius;
+        const targetY = centerY + t.y * maxRadius;
+        const dist = Math.hypot(x - targetX, y - targetY);
+        
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestTarget = t;
+        }
+      });
+
+      if (closestTarget) {
+        selectTarget(closestTarget.id);
+      }
+    });
+
+    // Handle mouse cursor styles
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      const scaleX = width / rect.width;
+      const scaleY = height / rect.height;
+      const x = clickX * scaleX;
+      const y = clickY * scaleY;
+
+      let isOverNode = false;
+      targets.forEach(t => {
+        const targetX = centerX + t.x * maxRadius;
+        const targetY = centerY + t.y * maxRadius;
+        const dist = Math.hypot(x - targetX, y - targetY);
+        if (dist < 16) isOverNode = true;
+      });
+
+      canvas.style.cursor = isOverNode ? "pointer" : "crosshair";
+    });
+
+    // 6. Bind Console UI Fields
+    function selectTarget(id) {
+      selectedTargetId = id;
+      const target = targets.find(t => t.id === id);
+      if (!target) return;
+
+      // Text Fields
+      hudName.innerHTML = `${target.name} <i class="fab ${target.platformIcon}" style="color:${target.platformColor}; font-size:14px;"></i>`;
+      hudPlatform.textContent = `${target.platform} • ${target.org}`;
+      hudScore.textContent = target.score;
+      hudReason.textContent = target.reason;
+      hudBio.innerHTML = `<strong>Bio:</strong> ${target.bio}`;
+
+      // Update SVG circular gauge stroke dashoffset
+      const radius = 18;
+      const circumference = 2 * Math.PI * radius; // 113.1
+      const offset = circumference - (target.score / 100) * circumference;
+      hudScoreCircle.style.strokeDashoffset = offset;
+      
+      // Update circular gauge stroke color
+      if (target.score >= 80) {
+        hudScoreCircle.style.stroke = "var(--accent-red)";
+      } else if (target.score >= 60) {
+        hudScoreCircle.style.stroke = "var(--accent-blue)";
+      } else {
+        hudScoreCircle.style.stroke = "var(--text-dark)";
+      }
+
+      // Load AI outreach draft reply
+      updateDraftReply();
+    }
+
+    function updateDraftReply() {
+      const target = targets.find(t => t.id === selectedTargetId);
+      if (!target) return;
+      
+      const text = target.drafts[selectedTab];
+      hudDraft.textContent = text;
+    }
+
+    // 7. Outreach tab switching logic
+    const tabBtns = document.querySelectorAll(".hud-tab-btn");
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedTab = btn.getAttribute("data-tab");
+        updateDraftReply();
+      });
+    });
+
+    // 8. Clipboard Copy Logic
+    hudCopyBtn.addEventListener("click", () => {
+      const text = hudDraft.textContent;
+      if (!text || text.includes("Select a target")) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        // Show Toast
+        copyToast.classList.add("show");
+        const originalHtml = hudCopyBtn.innerHTML;
+        hudCopyBtn.innerHTML = `<i class="fas fa-check"></i> Copied`;
+        hudCopyBtn.style.background = "var(--accent-green)";
+        
+        setTimeout(() => {
+          copyToast.classList.remove("show");
+          hudCopyBtn.innerHTML = originalHtml;
+          hudCopyBtn.style.background = "";
+        }, 2000);
+      }).catch(err => {
+        console.error("Clipboard write error: ", err);
+      });
+    });
+
+    // 9. Accordion FAQs logic
+    const faqItems = document.querySelectorAll(".faq-item");
+    faqItems.forEach(item => {
+      const question = item.querySelector(".faq-question");
+      const answer = item.querySelector(".faq-answer");
+      
+      question.addEventListener("click", () => {
+        const isActive = item.classList.contains("active");
+        
+        // Collapse all others
+        faqItems.forEach(otherItem => {
+          otherItem.classList.remove("active");
+          otherItem.querySelector(".faq-answer").style.maxHeight = null;
+        });
+
+        if (!isActive) {
+          item.classList.add("active");
+          answer.style.maxHeight = answer.scrollHeight + "px";
+        }
+      });
+    });
+
+    // Start animation loop & select initial node
+    drawRadar();
+    selectTarget(0);
+
+  </script>
+</body>
+</html>

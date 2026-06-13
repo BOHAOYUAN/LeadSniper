@@ -686,14 +686,44 @@ async function safeCopyToClipboard(text) {
 
 // ═══════════ TARGET SPAWNING PIPELINE ═══════════
 
-function spawnTarget(id, score, name, reason, category, profile=null, replies=null, tabId=null) {
+let autoSnipeCount = 0;
+
+function spawnTarget(id, score, name, reason, category, profile=null, replies=null, tabId=null, autoCaptured=false) {
   // Prevent duplicates
   if (targets.find(t => t.id === id)) return;
   
-  const newTarget = { id, score, name: name || 'Target Lead', reason, category, profile, replies, tabId };
+  const newTarget = { id, score, name: name || 'Target Lead', reason, category, profile, replies, tabId, autoCaptured };
   targets.push(newTarget);
   
   updateTargetsListUI();
+
+  // If autoCaptured, update the Snipe Queue
+  if (autoCaptured) {
+    const queueContainer = document.getElementById('snipe-queue-container');
+    const queueList = document.getElementById('snipe-queue-list');
+    const queueCount = document.getElementById('snipe-queue-count');
+    
+    if (queueContainer && queueList && queueCount) {
+      queueContainer.style.display = 'block';
+      autoSnipeCount++;
+      queueCount.textContent = autoSnipeCount;
+      
+      const item = document.createElement('div');
+      item.style.cssText = `
+        background: #FFFFFF; border: 1px solid #FECDD3; border-radius: 8px; padding: 6px 10px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 10px; font-weight: 600; color: #881337;
+        box-shadow: 0 1px 2px rgba(225,29,72,0.1); cursor: pointer; transition: all 0.2s;
+      `;
+      item.innerHTML = `
+        <span><i class="fas fa-external-link-alt" style="margin-right: 4px;"></i> ${newTarget.name.substring(0, 15)}...</span>
+        <span style="background: #FFF1F2; color: #E11D48; padding: 1px 6px; border-radius: 4px; font-weight: 800;">${score}</span>
+      `;
+      item.onclick = () => { selectTarget(newTarget); };
+      
+      queueList.insertBefore(item, queueList.firstChild);
+    }
+  }
 
   // If this target is high intent (>= 80) and we haven't selected anything yet, select it!
   if (score >= 80 && (!currentSelectedTarget || currentSelectedTarget.id.toString().startsWith('demo-'))) {
@@ -711,7 +741,7 @@ chrome.runtime.onMessage.addListener((msg) => {
       targets = [];
       currentSelectedTarget = null;
     }
-    spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId);
+    spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured);
   }
   
   if (msg.type === 'SELECT_TARGET_IN_PANEL') {
@@ -733,7 +763,7 @@ function loadStoredTargets() {
       if (response && response.targets && response.targets.length > 0) {
         console.log(`[Radar] Restoring ${response.targets.length} targets...`);
         response.targets.forEach(p => {
-          spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId);
+          spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured);
         });
       }
     });

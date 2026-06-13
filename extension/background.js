@@ -1,4 +1,4 @@
-﻿const STORAGE_KEYS = {
+const STORAGE_KEYS = {
   API_KEY: 'leadsniper_api_key',
   NICHE:   'leadsniper_niche',
   ENDPOINT: 'leadsniper_endpoint',
@@ -12,6 +12,9 @@ let activeRequests = 0;
 const requestQueue = [];
 let storedRadarTargets = [];
 const analysisCache = new Map();
+
+// Ultra Sniper Tracker
+let sessionUltraSniperTabs = 0;
 
 const REQUEST_TIMEOUT = 30000; // 30s timeout
 
@@ -352,13 +355,32 @@ async function handleAnalysis(msg) {
     tabId: msg.tabId,
     postText: postText, // Store text for on-demand use
     profileUrl: msg.profileUrl,
+    postUrl: msg.postUrl || msg.profileUrl,
     score: result.Confidence_Score, 
     category: result.Category,
     name: msg.authorName || 'Target',
     reason: reasonText,
     profile: profileData,
-    replies: repliesData
+    replies: repliesData,
+    autoCaptured: false
   };
+
+  // Ultra-Sniper Background Auto-Open Logic
+  if (msg.ultraSniper && result.Confidence_Score >= 80) {
+    const maxTabs = config['leadsniper_ultra_max_tabs'] || 10;
+    if (sessionUltraSniperTabs < maxTabs) {
+      const targetUrl = msg.postUrl || msg.profileUrl;
+      if (targetUrl) {
+        console.log(`[LeadSniper] Ultra-Sniper: Auto-opening tab for ${msg.authorName} (${sessionUltraSniperTabs + 1}/${maxTabs})`);
+        chrome.tabs.create({ url: targetUrl, active: false }).catch(() => {});
+        sessionUltraSniperTabs++;
+        radarPayload.autoCaptured = true;
+      }
+    } else {
+      console.warn(`[LeadSniper] Ultra-Sniper: Max tabs (${maxTabs}) reached for this session.`);
+    }
+  }
+
   storedRadarTargets.push(radarPayload);
   if (storedRadarTargets.length > 50) storedRadarTargets.shift();
   chrome.runtime.sendMessage({ type: 'SYNC_3D_RADAR', payload: radarPayload }).catch(()=>{});

@@ -10,7 +10,9 @@ const STORAGE_KEYS = {
   MUTE_SOUND:  'leadsniper_mute_sound',
   BLACKLIST:   'leadsniper_blacklist',
   REPLY_STYLE: 'leadsniper_reply_style',
-  DAILY_LIMIT: 'leadsniper_autopilot_daily_limit'
+  DAILY_LIMIT: 'leadsniper_autopilot_daily_limit',
+  ULTRA_SNIPER: 'leadsniper_ultra_sniper',
+  MAX_AUTO_TABS: 'leadsniper_ultra_max_tabs'
 };
 
 const $apiKey = document.getElementById('apiKey');
@@ -47,6 +49,14 @@ const $disclaimerModal = document.getElementById('disclaimerModal');
 const $acceptDisclaimerBtn = document.getElementById('acceptDisclaimerBtn');
 const $scramCooldownText = document.getElementById('scramCooldownText');
 const $lowThresholdWarning = document.getElementById('lowThresholdWarning');
+
+const $ultraSniperSwitch = document.getElementById('ultraSniperSwitch');
+const $ultraSniperWarning = document.getElementById('ultraSniperWarning');
+const $ultraSniperSettings = document.getElementById('ultraSniperSettings');
+const $ultraSniperLock = document.getElementById('ultraSniperLock');
+const $decMaxTabsBtn = document.getElementById('decMaxTabsBtn');
+const $incMaxTabsBtn = document.getElementById('incMaxTabsBtn');
+const $maxTabsCount = document.getElementById('maxTabsCount');
 
 const $modeHunterBtn = document.getElementById('modeHunterBtn');
 const $modePilotBtn = document.getElementById('modePilotBtn');
@@ -127,6 +137,10 @@ chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsniper_active', '
   if ($masterSwitch) $masterSwitch.checked = isActive;
   updateStatusDot(isActive);
 
+  // Ultra-Sniper init
+  if ($ultraSniperSwitch) $ultraSniperSwitch.checked = result[STORAGE_KEYS.ULTRA_SNIPER] === true;
+  if ($maxTabsCount) $maxTabsCount.textContent = result[STORAGE_KEYS.MAX_AUTO_TABS] || 10;
+
   // Auto-Pilot switch and threshold state
   refreshLicenseUI();
 });
@@ -205,6 +219,8 @@ function refreshLicenseUI() {
     if (!hasLicense) {
       if ($modePilotBtn) $modePilotBtn.classList.remove('active');
       if ($autoPilotLock) $autoPilotLock.style.display = 'inline';
+      if ($ultraSniperLock) $ultraSniperLock.style.display = 'inline';
+      if ($ultraSniperSwitch) $ultraSniperSwitch.disabled = true;
       if ($scramBtn) $scramBtn.style.display = 'none';
       
       if ($tierBadgeText) $tierBadgeText.textContent = "FREE TRIAL";
@@ -218,6 +234,13 @@ function refreshLicenseUI() {
       if ($autoPilotLock) {
         $autoPilotLock.style.display = 'inline';
         $autoPilotLock.title = "Upgrade to Pro to unlock Auto-Pilot";
+      }
+      if ($ultraSniperLock) {
+        $ultraSniperLock.style.display = 'inline';
+      }
+      if ($ultraSniperSwitch) {
+        $ultraSniperSwitch.checked = false;
+        $ultraSniperSwitch.disabled = true;
       }
       if ($scramBtn) $scramBtn.style.display = 'none';
 
@@ -233,6 +256,7 @@ function refreshLicenseUI() {
     } else {
       // Pro tier
       if ($autoPilotLock) $autoPilotLock.style.display = 'none';
+      if ($ultraSniperLock) $ultraSniperLock.style.display = 'none';
       
       if ($modePilotBtn) {
         if (isAutoPilot) $modePilotBtn.classList.add('active');
@@ -248,6 +272,10 @@ function refreshLicenseUI() {
       if ($scarcityBadge) $scarcityBadge.style.display = 'none';
 
       if ($scramBtn) $scramBtn.style.display = isAutoPilot ? 'block' : 'none';
+
+      const ultraChecked = $ultraSniperSwitch && $ultraSniperSwitch.checked;
+      if ($ultraSniperWarning) $ultraSniperWarning.style.display = ultraChecked ? 'block' : 'none';
+      if ($ultraSniperSettings) $ultraSniperSettings.style.display = ultraChecked ? 'flex' : 'none';
 
       if ($tierBadgeText) $tierBadgeText.textContent = "LTD PRO ($588)";
       if ($seatsBadge) $seatsBadge.innerHTML = `<i class="fas fa-star"></i> Elite Pro Active`;
@@ -281,6 +309,52 @@ if ($muteSoundSwitch) {
     const active = $muteSoundSwitch.checked;
     chrome.storage.local.set({ [STORAGE_KEYS.MUTE_SOUND]: active });
     showToast(active ? '🔇 SOUND MUTED' : '🔊 SOUND ENABLED', false);
+  });
+}
+
+if ($ultraSniperSwitch) {
+  $ultraSniperSwitch.addEventListener('change', () => {
+    chrome.storage.local.get(['leadsniper_license_tier', 'leadsniper_license_valid'], (res) => {
+      const isPro = res.leadsniper_license_valid && res.leadsniper_license_tier === 'pro';
+      if (!isPro) {
+        $ultraSniperSwitch.checked = false;
+        window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
+        return;
+      }
+      const active = $ultraSniperSwitch.checked;
+      chrome.storage.local.set({ [STORAGE_KEYS.ULTRA_SNIPER]: active }, () => {
+        refreshLicenseUI();
+        showToast(active ? '🔥 ULTRA-SNIPER ENGAGED' : '💤 ULTRA-SNIPER OFF', false);
+      });
+    });
+  });
+}
+
+if ($decMaxTabsBtn) {
+  $decMaxTabsBtn.addEventListener('click', () => {
+    chrome.storage.local.get([STORAGE_KEYS.MAX_AUTO_TABS], (res) => {
+      let limit = res[STORAGE_KEYS.MAX_AUTO_TABS] || 10;
+      if (limit > 1) {
+        limit--;
+        chrome.storage.local.set({ [STORAGE_KEYS.MAX_AUTO_TABS]: limit }, () => {
+          if ($maxTabsCount) $maxTabsCount.textContent = limit;
+        });
+      }
+    });
+  });
+}
+
+if ($incMaxTabsBtn) {
+  $incMaxTabsBtn.addEventListener('click', () => {
+    chrome.storage.local.get([STORAGE_KEYS.MAX_AUTO_TABS], (res) => {
+      let limit = res[STORAGE_KEYS.MAX_AUTO_TABS] || 10;
+      if (limit < 50) {
+        limit++;
+        chrome.storage.local.set({ [STORAGE_KEYS.MAX_AUTO_TABS]: limit }, () => {
+          if ($maxTabsCount) $maxTabsCount.textContent = limit;
+        });
+      }
+    });
   });
 }
 
@@ -441,13 +515,41 @@ if ($scramBtn) {
   });
 }
 
+const proModalOverlay = document.getElementById('proModalOverlay');
+const proModalClose = document.getElementById('proModalClose');
+const proModalCheckoutBtn = document.getElementById('proModalCheckoutBtn');
+
+function showProModal() {
+  if (proModalOverlay) proModalOverlay.style.display = 'flex';
+}
+
+if (proModalClose) {
+  proModalClose.addEventListener('click', () => {
+    proModalOverlay.style.display = 'none';
+  });
+}
+
+if (proModalOverlay) {
+  proModalOverlay.addEventListener('click', (e) => {
+    if (e.target === proModalOverlay) {
+      proModalOverlay.style.display = 'none';
+    }
+  });
+}
+
+if (proModalCheckoutBtn) {
+  proModalCheckoutBtn.addEventListener('click', () => {
+    window.open('https://checkout.dodopayments.com/buy/pdt_0NgefVmouwVkPJZIU4sIr?quantity=1', '_blank');
+  });
+}
+
 const documentUpgradeBtn = document.getElementById('upgradeBtn');
 if (documentUpgradeBtn) {
   documentUpgradeBtn.addEventListener('click', () => {
     chrome.storage.local.get(['leadsniper_license_tier'], (res) => {
       const tier = res.leadsniper_license_tier;
       if (tier === 'basic') {
-        window.open('https://checkout.dodopayments.com/buy/pdt_0NgefVmouwVkPJZIU4sIr?quantity=1', '_blank');
+        showProModal();
       } else {
         window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
       }
@@ -467,7 +569,7 @@ if ($proTierPill) {
     chrome.storage.local.get(['leadsniper_license_tier'], (res) => {
       const tier = res.leadsniper_license_tier;
       if (tier !== 'pro') {
-        window.open('https://checkout.dodopayments.com/buy/pdt_0NgefVmouwVkPJZIU4sIr?quantity=1', '_blank');
+        showProModal();
       }
     });
   });
@@ -481,6 +583,14 @@ if ($basicTierPill) {
         window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
       }
     });
+  });
+}
+
+const upgradeFromWarning = document.getElementById('upgradeFromWarning');
+if (upgradeFromWarning) {
+  upgradeFromWarning.addEventListener('click', (e) => {
+    e.preventDefault();
+    showProModal();
   });
 }
 
@@ -544,14 +654,16 @@ $saveBtn.addEventListener('click', async () => {
   const activeStyleTag = document.querySelector('.style-tag.active');
   const style      = activeStyleTag ? activeStyleTag.getAttribute('data-style') : 'Geek';
   const dailyLimit = $draftsCount ? parseInt($draftsCount.textContent, 10) : 15;
+  const ultraSniper = $ultraSniperSwitch ? $ultraSniperSwitch.checked : false;
+  const ultraMaxTabs = $maxTabsCount ? parseInt($maxTabsCount.textContent, 10) : 10;
 
   if (!apiKey || !niche) {
-    showToast('�?PLEASE FILL API KEY & NICHE', true);
+    showToast('⚠️ PLEASE FILL API KEY & NICHE', true);
     return;
   }
 
   const origText = $saveBtn.innerHTML;
-  $saveBtn.innerHTML = "�?INITIALIZING...";
+  $saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right: 6px;"></i> INITIALIZING...`;
   $saveBtn.disabled = true;
 
   if (licenseKey) {
@@ -563,13 +675,13 @@ $saveBtn.addEventListener('click', async () => {
       if (!response.success) {
         $saveBtn.innerHTML = origText;
         $saveBtn.disabled = false;
-        showToast('�?' + response.error, true);
+        showToast('❌ ' + response.error, true);
         return;
       }
     } catch(err) {
       $saveBtn.innerHTML = origText;
       $saveBtn.disabled = false;
-      showToast('�?VERIFICATION FAILED', true);
+      showToast('❌ VERIFICATION FAILED', true);
       return;
     }
   }
@@ -586,12 +698,14 @@ $saveBtn.addEventListener('click', async () => {
     [STORAGE_KEYS.BLACKLIST]:  blacklist,
     [STORAGE_KEYS.MUTE_SOUND]: muteSound,
     [STORAGE_KEYS.REPLY_STYLE]: style,
-    [STORAGE_KEYS.DAILY_LIMIT]: dailyLimit
+    [STORAGE_KEYS.DAILY_LIMIT]: dailyLimit,
+    [STORAGE_KEYS.ULTRA_SNIPER]: ultraSniper,
+    [STORAGE_KEYS.MAX_AUTO_TABS]: ultraMaxTabs
   }, () => {
     $saveBtn.innerHTML = origText;
     $saveBtn.disabled = false;
     refreshLicenseUI();
-    showToast('�?SECURED & LOCKED', false);
+    showToast('🔒 SECURED & LOCKED', false);
   });
 });
 
