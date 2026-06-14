@@ -1,18 +1,18 @@
 const STORAGE_KEYS = {
-  API_KEY:     'leadsniper_api_key',
-  NICHE:       'leadsniper_niche',
-  ENDPOINT:    'leadsniper_endpoint',
-  MODEL:       'leadsniper_model',
-  LICENSE:     'leadsniper_license',
-  WEBHOOK:     'leadsniper_webhook',
-  AUTO_SYNC:   'leadsniper_auto_sync',
-  VALUE_PROP:  'leadsniper_value_prop',
-  MUTE_SOUND:  'leadsniper_mute_sound',
-  BLACKLIST:   'leadsniper_blacklist',
-  REPLY_STYLE: 'leadsniper_reply_style',
-  DAILY_LIMIT: 'leadsniper_autopilot_daily_limit',
-  ULTRA_SNIPER: 'leadsniper_ultra_sniper',
-  MAX_AUTO_TABS: 'leadsniper_ultra_max_tabs'
+  API_KEY:     'leadsnapper_api_key',
+  NICHE:       'leadsnapper_niche',
+  ENDPOINT:    'leadsnapper_endpoint',
+  MODEL:       'leadsnapper_model',
+  LICENSE:     'leadsnapper_license',
+  WEBHOOK:     'leadsnapper_webhook',
+  AUTO_SYNC:   'leadsnapper_auto_sync',
+  VALUE_PROP:  'leadsnapper_value_prop',
+  MUTE_SOUND:  'leadsnapper_mute_sound',
+  BLACKLIST:   'leadsnapper_blacklist',
+  REPLY_STYLE: 'leadsnapper_reply_style',
+  DAILY_LIMIT: 'leadsnapper_autopilot_daily_limit',
+  ULTRA_SNIPER: 'leadsnapper_ultra_sniper',
+  MAX_AUTO_TABS: 'leadsnapper_ultra_max_tabs'
 };
 
 const $apiKey = document.getElementById('apiKey');
@@ -100,13 +100,13 @@ function startScramCountdown(cooldownTime) {
 }
 
 // Load values
-chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsniper_active', 'leadsniper_autohunter', 'leadsniper_scram_cooldown_until', 'leadsniper_disclaimer_accepted', 'leadsniper_autopilot_daily_count'], (result) => {
+chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsnapper_active', 'leadsnapper_autohunter', 'leadsnapper_scram_cooldown_until', 'leadsnapper_disclaimer_accepted', 'leadsnapper_autopilot_daily_count'], (result) => {
   $apiKey.value     = result[STORAGE_KEYS.API_KEY] || 'sk-7d97a68e6967406db9ecf35fa986313a';
   $licenseKey.value = result[STORAGE_KEYS.LICENSE] || '';
   $niche.value      = result[STORAGE_KEYS.NICHE]   || 'AI Automation and SaaS Growth';
   if ($valueProp)  $valueProp.value  = result[STORAGE_KEYS.VALUE_PROP] || '';
   let webhookVal = result[STORAGE_KEYS.WEBHOOK] || '';
-  if (webhookVal === 'https://x.com/home' || webhookVal === 'https://api.hubspot.com/webhooks/leadsniper') {
+  if (webhookVal === 'https://x.com/home' || webhookVal === 'https://api.hubspot.com/webhooks/leadsnapper') {
     webhookVal = '';
     chrome.storage.local.set({ [STORAGE_KEYS.WEBHOOK]: '' });
   }
@@ -133,11 +133,11 @@ chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsniper_active', '
   $apiModel.value = mod;
 
   // Master Switch state
-  const isActive = result.leadsniper_active !== false; 
+  const isActive = result.leadsnapper_active !== false; 
   if ($masterSwitch) $masterSwitch.checked = isActive;
   updateStatusDot(isActive);
 
-  // Ultra-Sniper init
+  // Ultra-Snapper init
   if ($ultraSniperSwitch) $ultraSniperSwitch.checked = result[STORAGE_KEYS.ULTRA_SNIPER] === true;
   if ($maxTabsCount) $maxTabsCount.textContent = result[STORAGE_KEYS.MAX_AUTO_TABS] || 10;
 
@@ -147,24 +147,24 @@ chrome.storage.local.get([...Object.values(STORAGE_KEYS), 'leadsniper_active', '
 
 function refreshLicenseUI() {
   chrome.storage.local.get([
-    'leadsniper_autopilot', 
-    'leadsniper_autohunter',
-    'leadsniper_autopilot_threshold', 
-    'leadsniper_license_valid', 
-    'leadsniper_license_tier', 
-    'leadsniper_scram_cooldown_until',
-    'leadsniper_autopilot_daily_count',
-    'leadsniper_autopilot_daily_limit'
+    'leadsnapper_autopilot', 
+    'leadsnapper_autohunter',
+    'leadsnapper_autopilot_threshold', 
+    'leadsnapper_license_valid', 
+    'leadsnapper_license_tier', 
+    'leadsnapper_scram_cooldown_until',
+    'leadsnapper_autopilot_daily_count',
+    'leadsnapper_autopilot_daily_limit'
   ], (res) => {
-    const isAutoPilot = res.leadsniper_autopilot === true;
-    const isAutoHunter = res.leadsniper_autohunter === true;
-    const threshold = res.leadsniper_autopilot_threshold || 85;
-    const hasLicense = res.leadsniper_license_valid === true;
-    const tier = res.leadsniper_license_tier || 'basic';
-    const cooldownUntil = res.leadsniper_scram_cooldown_until || 0;
+    const isAutoPilot = res.leadsnapper_autopilot === true;
+    const isAutoHunter = res.leadsnapper_autohunter === true;
+    const threshold = res.leadsnapper_autopilot_threshold || 85;
+    const hasLicense = res.leadsnapper_license_valid === true;
+    const tier = res.leadsnapper_license_tier || 'basic';
+    const cooldownUntil = res.leadsnapper_scram_cooldown_until || 0;
     
-    const dailyCount = res.leadsniper_autopilot_daily_count || 0;
-    const dailyLimit = res.leadsniper_autopilot_daily_limit || 15;
+    const dailyCount = res.leadsnapper_autopilot_daily_count || 0;
+    const dailyLimit = res.leadsnapper_autopilot_daily_limit || 15;
 
     // Steppers UI sync
     if ($draftsCount) $draftsCount.textContent = dailyLimit;
@@ -298,7 +298,7 @@ function updateStatusDot(active) {
 if ($masterSwitch) {
   $masterSwitch.addEventListener('change', () => {
     const active = $masterSwitch.checked;
-    chrome.storage.local.set({ leadsniper_active: active });
+    chrome.storage.local.set({ leadsnapper_active: active });
     updateStatusDot(active);
     showToast(active ? '🛰\uFE0F SCANNER ONLINE' : '💤 SCANNER OFFLINE', !active);
   });
@@ -314,8 +314,8 @@ if ($muteSoundSwitch) {
 
 if ($ultraSniperSwitch) {
   $ultraSniperSwitch.addEventListener('change', () => {
-    chrome.storage.local.get(['leadsniper_license_tier', 'leadsniper_license_valid'], (res) => {
-      const isPro = res.leadsniper_license_valid && res.leadsniper_license_tier === 'pro';
+    chrome.storage.local.get(['leadsnapper_license_tier', 'leadsnapper_license_valid'], (res) => {
+      const isPro = res.leadsnapper_license_valid && res.leadsnapper_license_tier === 'pro';
       if (!isPro) {
         $ultraSniperSwitch.checked = false;
         window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
@@ -361,15 +361,15 @@ if ($incMaxTabsBtn) {
 // Mode options segmented control listeners
 if ($modeHunterBtn) {
   $modeHunterBtn.addEventListener('click', () => {
-    chrome.storage.local.get(['leadsniper_autohunter'], (res) => {
-      const active = res.leadsniper_autohunter === true;
+    chrome.storage.local.get(['leadsnapper_autohunter'], (res) => {
+      const active = res.leadsnapper_autohunter === true;
       if (active) {
-        chrome.storage.local.set({ leadsniper_autohunter: false }, () => {
+        chrome.storage.local.set({ leadsnapper_autohunter: false }, () => {
           refreshLicenseUI();
           showToast('💤 AUTO-HUNTER OFFLINE', true);
         });
       } else {
-        chrome.storage.local.set({ leadsniper_autohunter: true, leadsniper_autopilot: false }, () => {
+        chrome.storage.local.set({ leadsnapper_autohunter: true, leadsnapper_autopilot: false }, () => {
           refreshLicenseUI();
           showToast('\uD83C\uDFAF AUTO-HUNTER ONLINE', false);
         });
@@ -380,10 +380,10 @@ if ($modeHunterBtn) {
 
 if ($modePilotBtn) {
   $modePilotBtn.addEventListener('click', () => {
-    chrome.storage.local.get(['leadsniper_autopilot', 'leadsniper_license_valid', 'leadsniper_license_tier', 'leadsniper_scram_cooldown_until'], (res) => {
-      const hasLicense = res.leadsniper_license_valid === true;
-      const tier = res.leadsniper_license_tier || 'basic';
-      const cooldownUntil = res.leadsniper_scram_cooldown_until || 0;
+    chrome.storage.local.get(['leadsnapper_autopilot', 'leadsnapper_license_valid', 'leadsnapper_license_tier', 'leadsnapper_scram_cooldown_until'], (res) => {
+      const hasLicense = res.leadsnapper_license_valid === true;
+      const tier = res.leadsnapper_license_tier || 'basic';
+      const cooldownUntil = res.leadsnapper_scram_cooldown_until || 0;
 
       if (cooldownUntil > Date.now()) {
         showToast('\u23F3 COOLDOWN ACTIVE', true);
@@ -399,18 +399,18 @@ if ($modePilotBtn) {
         return;
       }
 
-      const active = res.leadsniper_autopilot === true;
+      const active = res.leadsnapper_autopilot === true;
       if (active) {
-        chrome.storage.local.set({ leadsniper_autopilot: false }, () => {
+        chrome.storage.local.set({ leadsnapper_autopilot: false }, () => {
           refreshLicenseUI();
           showToast('💤 AUTO-PILOT OFF', true);
         });
       } else {
-        chrome.storage.local.get('leadsniper_disclaimer_accepted', (dRes) => {
-          if (!dRes.leadsniper_disclaimer_accepted) {
+        chrome.storage.local.get('leadsnapper_disclaimer_accepted', (dRes) => {
+          if (!dRes.leadsnapper_disclaimer_accepted) {
             if ($disclaimerModal) $disclaimerModal.style.display = 'flex';
           } else {
-            chrome.storage.local.set({ leadsniper_autopilot: true, leadsniper_autohunter: false }, () => {
+            chrome.storage.local.set({ leadsnapper_autopilot: true, leadsnapper_autohunter: false }, () => {
               refreshLicenseUI();
               showToast('🛰\uFE0F AUTO-PILOT ON', false);
             });
@@ -424,9 +424,9 @@ if ($modePilotBtn) {
 if ($acceptDisclaimerBtn) {
   $acceptDisclaimerBtn.addEventListener('click', () => {
     chrome.storage.local.set({
-      leadsniper_disclaimer_accepted: true,
-      leadsniper_autopilot: true,
-      leadsniper_autohunter: false
+      leadsnapper_disclaimer_accepted: true,
+      leadsnapper_autopilot: true,
+      leadsnapper_autohunter: false
     }, () => {
       if ($disclaimerModal) $disclaimerModal.style.display = 'none';
       refreshLicenseUI();
@@ -453,7 +453,7 @@ if ($autoPilotThreshold) {
     }
   });
   $autoPilotThreshold.addEventListener('change', () => {
-    chrome.storage.local.set({ leadsniper_autopilot_threshold: parseInt($autoPilotThreshold.value, 10) });
+    chrome.storage.local.set({ leadsnapper_autopilot_threshold: parseInt($autoPilotThreshold.value, 10) });
   });
 }
 
@@ -504,8 +504,8 @@ if ($scramBtn) {
     const cooldownTime = Date.now() + cooldownDuration;
     
     chrome.storage.local.set({
-      leadsniper_autopilot: false,
-      leadsniper_scram_cooldown_until: cooldownTime
+      leadsnapper_autopilot: false,
+      leadsnapper_scram_cooldown_until: cooldownTime
     }, () => {
       refreshLicenseUI();
       chrome.runtime.sendMessage({ type: "SCRAM_KILL" });
@@ -546,8 +546,8 @@ if (proModalCheckoutBtn) {
 const documentUpgradeBtn = document.getElementById('upgradeBtn');
 if (documentUpgradeBtn) {
   documentUpgradeBtn.addEventListener('click', () => {
-    chrome.storage.local.get(['leadsniper_license_tier'], (res) => {
-      const tier = res.leadsniper_license_tier;
+    chrome.storage.local.get(['leadsnapper_license_tier'], (res) => {
+      const tier = res.leadsnapper_license_tier;
       if (tier === 'basic') {
         showProModal();
       } else {
@@ -566,8 +566,8 @@ if (buyLicenseBtn) {
 
 if ($proTierPill) {
   $proTierPill.addEventListener('click', () => {
-    chrome.storage.local.get(['leadsniper_license_tier'], (res) => {
-      const tier = res.leadsniper_license_tier;
+    chrome.storage.local.get(['leadsnapper_license_tier'], (res) => {
+      const tier = res.leadsnapper_license_tier;
       if (tier !== 'pro') {
         showProModal();
       }
@@ -577,8 +577,8 @@ if ($proTierPill) {
 
 if ($basicTierPill) {
   $basicTierPill.addEventListener('click', () => {
-    chrome.storage.local.get(['leadsniper_license_valid'], (res) => {
-      const hasLicense = res.leadsniper_license_valid === true;
+    chrome.storage.local.get(['leadsnapper_license_valid'], (res) => {
+      const hasLicense = res.leadsnapper_license_valid === true;
       if (!hasLicense) {
         window.open('https://checkout.dodopayments.com/buy/pdt_0NgNoZpvOKdipx3cyM5dX?quantity=1', '_blank');
       }

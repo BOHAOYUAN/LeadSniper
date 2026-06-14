@@ -1,17 +1,17 @@
-# LeadSniper User Manual
+# LeadSnapper User Manual
 
 **Author:** Bohao Yuan (HY Digital Studio)  
-**Website:** [bohaoyuan.github.io/LeadSniper](https://bohaoyuan.github.io/LeadSniper/)
+**Website:** [bohaoyuan.github.io/LeadSnapper](https://bohaoyuan.github.io/LeadSnapper/)
 
 ---
 
 ## 0. A Quick Note
 
-Hey, I'm Bohao, the developer of LeadSniper.
+Hey, I'm Bohao, the developer of LeadSnapper.
 
 I built this extension for a very simple reason: **I was sick and tired of manually scrolling through Twitter and LinkedIn every single day to find B2B clients**. My hands were about to fall off, and my efficiency was garbage.
 
-So I thought, why not let AI do the heavy lifting for me? That's how LeadSniper was born.
+So I thought, why not let AI do the heavy lifting for me? That's how LeadSnapper was born.
 
 This isn't some corporate product from a massive company; it's just a tool built by me, a solo developer. **The code is transparent, and your data is stored entirely on your own machine. I can't touch it.** If you trust me, use it. If you don't, feel free to audit the code.
 
@@ -21,11 +21,11 @@ Here's how to install and use it. I'll keep it as straightforward as possible.
 
 ## 1. What You Get After Purchase
 
-Once your payment is successful, you will receive a ZIP archive: `LeadSniper_Secure.zip`
+Once your payment is successful, you will receive a ZIP archive: `LeadSnapper_Secure.zip`
 
 Unzip it, and you'll find:
 
-- `LeadSniper/` folder — The full source code of the extension (manifest, background scripts, 3D panel, styling)
+- `LeadSnapper/` folder — The full source code of the extension (manifest, background scripts, 3D panel, styling)
 - `How-to-Install.html` — An offline installation guide (designed to look quite nice)
 
 No hidden `.exe` files, no background installers, no remote tracking. **It is a pure browser extension.**
@@ -36,12 +36,12 @@ No hidden `.exe` files, no background installers, no remote tracking. **It is a 
 
 ### Chrome Browser
 
-1. Extract `LeadSniper_Secure.zip` to a safe place, like `Documents/LeadSniper`
+1. Extract `LeadSnapper_Secure.zip` to a safe place, like `Documents/LeadSnapper`
 2. Type `chrome://extensions/` in your browser address bar and press Enter
 3. Enable **"Developer mode"** in the top-right corner
 4. Click **"Load unpacked"** in the top-left corner
-5. Select the `LeadSniper/` folder you just extracted (the one containing `manifest.json`)
-6. Once installed, click the puzzle icon in the top-right of your browser and pin LeadSniper to your toolbar
+5. Select the `LeadSnapper/` folder you just extracted (the one containing `manifest.json`)
+6. Once installed, click the puzzle icon in the top-right of your browser and pin LeadSnapper to your toolbar
 
 ### Edge Browser
 
@@ -51,7 +51,7 @@ The steps are virtually identical:
 2. Type `edge://extensions/` in your address bar
 3. Turn on "Developer mode" on the left sidebar
 4. Click "Load unpacked"
-5. Select the `LeadSniper/` folder
+5. Select the `LeadSnapper/` folder
 6. Click the eye icon next to the address bar to pin the extension
 
 ---
@@ -70,7 +70,7 @@ The steps are virtually identical:
 
 ## 4. First-Time Setup: Activation & Configuration
 
-Click the LeadSniper icon in your toolbar to open the Control Center.
+Click the LeadSnapper icon in your toolbar to open the Control Center.
 
 ### A. Activate Your License Key
 
@@ -82,7 +82,7 @@ You'll receive a License Key in your email after purchase (processed via Dodo Pa
 
 ### B. Configure Your API Key (DeepSeek or OpenAI)
 
-LeadSniper is optimized for **DeepSeek-V3** by default, but it is compatible with any OpenAI-compatible API.
+LeadSnapper is optimized for **DeepSeek-V3** by default, but it is compatible with any OpenAI-compatible API.
 
 - Paste your API key (obtained from the DeepSeek or OpenAI console) into the API Key input field
 - Click the "Test" button to run a diagnostic test
@@ -102,7 +102,7 @@ Want the AI to know who to look for and how to write the responses? Fill out the
 > Example: B2B SaaS founders struggling with high customer churn who are actively searching for growth tools...
 
 **Your Value Proposition**  
-> Example: LeadSniper — A local-first B2B social intent tracker that automatically detects prospects and generates outreach replies...
+> Example: LeadSnapper — A local-first B2B social intent tracker that automatically detects prospects and generates outreach replies...
 
 **AI Outreach Style** (Choose one):
 - 💻 **Geek:** Highly technical, detailed, and analytical.
@@ -115,7 +115,7 @@ Want the AI to know who to look for and how to write the responses? Fill out the
 
 ### 1. AUTO-HUNTER Mode (Standard Mode)
 
-**How to use:** Just browse your social feeds normally. LeadSniper works in the background to scan every post you scroll past, determining if the author shows active buying intent.
+**How to use:** Just browse your social feeds normally. LeadSnapper works in the background to scan every post you scroll past, determining if the author shows active buying intent.
 
 **Best for:** When you are browsing social media yourself and want an AI "copilot" to highlight high-potential prospects on the fly.
 
@@ -190,7 +190,7 @@ Export lead dossiers to Airtable, HubSpot, Notion, or custom workflows built via
 
 ```json
 {
-  "source": "LeadSniper_V3_Radar",
+  "source": "LeadSnapper_V3_Radar",
   "timestamp": "2026-06-09T18:27:14.000Z",
   "target_name": "John Doe",
   "intent_score": 92,
@@ -201,7 +201,7 @@ Export lead dossiers to Airtable, HubSpot, Notion, or custom workflows built via
     "bio": "Founder of Acme SaaS. Ex-YCombinator. Building future-proof B2B software."
   },
   "outreach_drafts": {
-    "Professional": "Hey John, sorry to hear about the churn increase. If you are looking to automate CS pipelines without complex dashboards, LeadSniper fits that description perfectly. Glad to give you a walk-through.",
+    "Professional": "Hey John, sorry to hear about the churn increase. If you are looking to automate CS pipelines without complex dashboards, LeadSnapper fits that description perfectly. Glad to give you a walk-through.",
     "Humor": "Hey John, pricing changes and 15% churn—nothing like manual account saving to start the day. If you want a quick shortcut to automate customer success before you lose your mind, let's chat.",
     "Director": "I saw your note on Acme SaaS and pricing friction. I've worked with B2B founders who automated this exact problem away in a week. Happy to show you how."
   }
@@ -212,10 +212,10 @@ Export lead dossiers to Airtable, HubSpot, Notion, or custom workflows built via
 
 ## 10. Pro Anti-Ban Tips (Learned the Hard Way)
 
-Even though LeadSniper simulates human typing speeds, platform algorithms are strict. **Here are the rules I live by to protect my accounts:**
+Even though LeadSnapper simulates human typing speeds, platform algorithms are strict. **Here are the rules I live by to protect my accounts:**
 
 1. **Never use automated clickers to send messages**  
-   LeadSniper only writes drafts and types them; clicking the final "Send" button is up to you. This is your best defense against automated detection.
+   LeadSnapper only writes drafts and types them; clicking the final "Send" button is up to you. This is your best defense against automated detection.
 
 2. **Manage your daily limits**  
    - X (Twitter): No more than 50 DMs/replies per day.  
@@ -234,7 +234,7 @@ Even though LeadSniper simulates human typing speeds, platform algorithms are st
 
 - **Merchant of Record:** Dodo Payments → support@dodopayments.com
 - **Technical Support:** Bohao Yuan / HY Digital Studio → hy@hydigital.studio
-- **Website:** [bohaoyuan.github.io/LeadSniper](https://bohaoyuan.github.io/LeadSniper/)
+- **Website:** [bohaoyuan.github.io/LeadSnapper](https://bohaoyuan.github.io/LeadSnapper/)
 
 Send me an email if you run into any issues. I'll get back to you personally.
 

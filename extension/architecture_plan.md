@@ -1,4 +1,4 @@
-# LeadSniper Architecture & Execution Plan
+# LeadSnapper Architecture & Execution Plan
 
 ## Phase 1: The Command Center (Popup UI & Logic)
 **Goal:** Create a secure and visually impactful config interface.

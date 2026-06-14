@@ -1,6 +1,6 @@
-/* LeadSniper 3.0 Content Script — Dual Platform Engine (Hardened) */
+/* LeadSnapper 3.0 Content Script — Dual Platform Engine (Hardened) */
 
-console.log('🚀 [LeadSniper] v3 Engine Boot.');
+console.log('🚀 [LeadSnapper] v3 Engine Boot.');
 
 const CONFIG = {
   MIN_LENGTH: 80,
@@ -11,7 +11,9 @@ const CONFIG = {
 let TOTAL_SCANNED = 0;
 let EXTENSION_ALIVE = true; // Guard against context invalidation
 let IS_MUTE_SOUND = false;
+let IS_ULTRA_SNIPER = false;
 let BLACKLIST_KEYWORDS = [];
+const PROCESSED_POSTS = new Set();
 
 function buildBlacklist(blacklistText) {
   if (!blacklistText) {
@@ -21,7 +23,7 @@ function buildBlacklist(blacklistText) {
   BLACKLIST_KEYWORDS = blacklistText.split(',')
     .map(w => w.trim().toLowerCase())
     .filter(w => w.length > 0);
-  console.log('🔇 [LeadSniper] Loaded blacklist keywords:', BLACKLIST_KEYWORDS);
+  console.log('🔇 [LeadSnapper] Loaded blacklist keywords:', BLACKLIST_KEYWORDS);
 }
 
 const PLATFORM = window.location.hostname.includes('linkedin.com') ? 'LinkedIn'
@@ -30,7 +32,7 @@ const PLATFORM = window.location.hostname.includes('linkedin.com') ? 'LinkedIn'
                : window.location.hostname.includes('news.ycombinator.com') ? 'HN'
                : null;
 
-if (!PLATFORM) console.warn('[LeadSniper] Unsupported platform.');
+if (!PLATFORM) console.warn('[LeadSnapper] Unsupported platform.');
 
 // ══════════════════════════════════════════════════════════
 //  EXTENSION CONTEXT GUARD
@@ -55,7 +57,7 @@ function safeSendMessage(msg, callback) {
         // Check if context died
         if (chrome.runtime.lastError.message?.includes('Extension context invalidated') ||
             chrome.runtime.lastError.message?.includes('disconnected')) {
-          console.warn('[LeadSniper] Extension reloaded. Please refresh this page.');
+          console.warn('[LeadSnapper] Extension reloaded. Please refresh this page.');
           EXTENSION_ALIVE = false;
           observer.disconnect();
           updateRadar('⚠️ REFRESH PAGE');
@@ -65,14 +67,26 @@ function safeSendMessage(msg, callback) {
       if (callback) callback(response);
     });
   } catch (e) {
-    console.warn('[LeadSniper] Extension context lost. Shutting down gracefully.');
+    console.warn('[LeadSnapper] Extension context lost. Shutting down gracefully.');
     EXTENSION_ALIVE = false;
     observer.disconnect();
     updateRadar('⚠️ REFRESH PAGE');
   }
 }
 
+let isScrammed = false;
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'SCRAM_KILL') {
+    console.warn('🛑 [LeadSnapper] SCRAM emergency stop initiated.');
+    isScrammed = true;
+    document.querySelectorAll('.ls-autopilot-ready-badge').forEach(el => el.remove());
+    const toast = document.getElementById('ls-linkedin-autopilot-toast');
+    if (toast) toast.remove();
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (msg.type === 'SCROLL_TO_POST' && msg.id) {
     const el = document.querySelector(`[data-ls-id="${msg.id}"]`);
     if (el) {
@@ -214,12 +228,12 @@ function extractAuthor(el) {
   let authorBio = "";
 
   if (PLATFORM === 'X') {
-    const nameEl = el.querySelector('[data-testid="User-Name"] span');
+    const nameEl = el.querySelector('[data-testid="User-Name"] span, a[href^="/"] span');
     if (nameEl) authorName = nameEl.textContent.trim();
-    const link = el.querySelector('a[role="link"][href^="/"]');
-    if (link) profileUrl = link.href;
+    const link = el.querySelector('a[role="link"][href^="/"], a[href^="/"]');
+    if (link) profileUrl = link.href.startsWith('http') ? link.href : 'https://x.com' + link.getAttribute('href');
 
-    const handleEl = el.querySelector('[data-testid="User-Name"] a[href^="/"] span:nth-child(2)');
+    const handleEl = el.querySelector('[data-testid="User-Name"] a[href^="/"] span:nth-child(2), span.css-901oao.css-16my406.r-poiln3.r-bcqeeo.r-qvutc0');
     if (handleEl) {
       authorBio = handleEl.textContent.trim(); // store handle in bio for context
     }
@@ -397,11 +411,16 @@ function getActiveEditor(postEl) {
     }
     return document.querySelector('[role="textbox"]');
   } else if (PLATFORM === 'LinkedIn') {
-    const qlEditor = postEl.querySelector('.ql-editor') || document.querySelector('.ql-editor');
-    if (qlEditor) return qlEditor;
-    const contentEditableDiv = postEl.querySelector('div[contenteditable="true"]') || document.querySelector('div[contenteditable="true"]');
-    if (contentEditableDiv) return contentEditableDiv;
-    return postEl.querySelector('[role="textbox"]') || document.querySelector('[role="textbox"]');
+    const robustEditor = postEl.querySelector('div[contenteditable="true"][role="textbox"]') ||
+                         postEl.querySelector('div[contenteditable="true"]') ||
+                         postEl.querySelector('div[aria-label*="comment" i]') ||
+                         postEl.querySelector('div[aria-label*="评论"]') ||
+                         postEl.querySelector('div[data-placeholder*="comment" i]') ||
+                         postEl.querySelector('.ql-editor') ||
+                         document.querySelector('div[contenteditable="true"][role="textbox"]') ||
+                         document.querySelector('div[aria-label*="comment" i]') ||
+                         document.querySelector('.ql-editor');
+    if (robustEditor) return robustEditor;
   } else if (PLATFORM === 'Reddit') {
     return document.querySelector('shreddit-composer div[contenteditable="true"]') || 
            document.querySelector('div[contenteditable="true"]') ||
@@ -410,6 +429,173 @@ function getActiveEditor(postEl) {
     return document.querySelector('textarea[name="text"]');
   }
   return document.querySelector('[contenteditable="true"], [role="textbox"]');
+}
+
+// ── AUTO-PILOT FUNCTIONS ──
+function showLinkedInToast(textToCopy) {
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    let toast = document.getElementById('ls-linkedin-autopilot-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'ls-linkedin-autopilot-toast';
+      toast.style.cssText = `
+        position: fixed; top: 30px; right: 30px; z-index: 2147483647;
+        background: #0a0a0f; border: 1.5px dashed #00ff9d; color: #fff;
+        padding: 12px 20px; border-radius: 8px; font-family: monospace;
+        font-size: 12px; box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+        display: flex; align-items: center; gap: 10px;
+        animation: ls-slide-in-right 0.3s ease-out;
+      `;
+      
+      if (!document.getElementById('ls-toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'ls-toast-styles';
+        style.innerHTML = `
+          @keyframes ls-slide-in-right {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes ls-checkmark-draw {
+            to { stroke-dashoffset: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      document.body.appendChild(toast);
+    }
+    
+    toast.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" style="stroke-dasharray: 22; stroke-dashoffset: 22; animation: ls-checkmark-draw 0.4s ease-out forwards;"></polyline>
+      </svg>
+      <div>
+        <span style="color:#00ff9d; font-weight:bold;">🛰️ LeadSnapper Auto-Pilot:</span> Draft Copied!
+        <div style="color:#aaa; font-size:10px; margin-top:2px;">Click Comment field and press <b>Ctrl+V</b> to paste.</div>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.5s ease';
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 500);
+    }, 5000);
+  }).catch(err => {
+    console.warn("[LeadSnapper] Clipboard copy failed:", err);
+  });
+}
+
+function injectAutoPilotReadyBadge(editor, postEl) {
+  if (postEl.querySelector('.ls-autopilot-ready-badge')) return;
+  
+  const badge = document.createElement('div');
+  badge.className = 'ls-autopilot-ready-badge';
+  badge.style.cssText = `
+    font-size: 10px; color: #00ff9d; font-family: monospace;
+    background: rgba(0, 255, 157, 0.1); border: 1px solid #00ff9d;
+    padding: 3px 8px; border-radius: 4px; display: inline-flex;
+    align-items: center; gap: 4px; margin-top: 6px; font-weight: bold;
+    animation: ls-pulse-glow 1.5s infinite ease-in-out;
+  `;
+  badge.innerHTML = `🛰️ LeadSnapper Auto-Filled (Ready to Send)`;
+  
+  const parent = editor.parentElement;
+  editor.after(badge);
+  
+  if (!document.getElementById('ls-badge-styles')) {
+    const style = document.createElement('style');
+    style.id = 'ls-badge-styles';
+    style.innerHTML = `
+      @keyframes ls-pulse-glow {
+        0%, 100% { box-shadow: 0 0 3px rgba(0,255,157,0.3); opacity: 0.9; }
+        50% { box-shadow: 0 0 8px rgba(0,255,157,0.6); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+async function typeIntoEditor(editor, text, postEl) {
+  editor.focus();
+  document.execCommand('selectAll', false, null);
+  document.execCommand('delete', false, null);
+  
+  let index = 0;
+  let isInterrupted = false;
+  
+  const interruptHandler = (e) => {
+    if (!isInterrupted && !isScrammed) {
+      isInterrupted = true;
+      console.log("[LeadSnapper] Typist simulator interrupted by user. Performing fast-fill...");
+      document.execCommand('selectAll', false, null);
+      document.execCommand('insertText', false, text);
+      cleanup();
+    }
+  };
+  
+  editor.addEventListener('keydown', interruptHandler, { capture: true });
+  editor.addEventListener('mousedown', interruptHandler, { capture: true });
+  
+  const cleanup = () => {
+    editor.removeEventListener('keydown', interruptHandler, { capture: true });
+    editor.removeEventListener('mousedown', interruptHandler, { capture: true });
+    editor.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ' ', keyCode: 32 }));
+    if (!isScrammed) {
+      injectAutoPilotReadyBadge(editor, postEl);
+    }
+  };
+  
+  const typeChar = () => {
+    if (isInterrupted) return;
+    if (isScrammed) {
+      editor.removeEventListener('keydown', interruptHandler, { capture: true });
+      editor.removeEventListener('mousedown', interruptHandler, { capture: true });
+      return;
+    }
+    if (index < text.length) {
+      const char = text[index++];
+      document.execCommand('insertText', false, char);
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      const delay = 20 + Math.random() * 40;
+      setTimeout(typeChar, delay);
+    } else {
+      cleanup();
+    }
+  };
+  
+  typeChar();
+}
+
+async function triggerAutoPilot(postEl, replies) {
+  if (!replies) return;
+  const replyText = replies.Professional || replies.Humor || replies.Director;
+  if (!replyText) return;
+
+  console.log("[LeadSnapper] Auto-Pilot triggering outreach sequence...");
+
+  if (PLATFORM === 'X') {
+    const replyBtn = postEl.querySelector('[data-testid="reply"]');
+    if (replyBtn) {
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 200));
+      replyBtn.click();
+      
+      let attempts = 0;
+      const interval = setInterval(() => {
+        const editor = getActiveEditor(postEl);
+        if (editor) {
+          clearInterval(interval);
+          setTimeout(() => {
+            typeIntoEditor(editor, replyText, postEl);
+          }, 300);
+        }
+        attempts++;
+        if (attempts > 15) clearInterval(interval);
+      }, 500);
+    }
+  } else if (PLATFORM === 'LinkedIn') {
+    showLinkedInToast(replyText);
+  }
 }
 
 // ── RPA ──
@@ -428,12 +614,12 @@ async function simulateRPA(postEl, text) {
       if (!permalink.startsWith('/')) permalink = '/' + permalink;
       const detailUrl = 'https://www.reddit.com' + permalink;
       chrome.storage.local.set({
-        leadsniper_pending_reply: {
+        leadsnapper_pending_reply: {
           url: permalink,
           text: text
         }
       }, () => {
-        console.log('[LeadSniper] Saved pending reply. Redirecting...');
+        console.log('[LeadSnapper] Saved pending reply. Redirecting...');
         window.location.href = detailUrl;
       });
     }
@@ -445,12 +631,12 @@ async function simulateRPA(postEl, text) {
     if (id) {
       const detailUrl = `https://news.ycombinator.com/item?id=${id}`;
       chrome.storage.local.set({
-        leadsniper_pending_reply: {
+        leadsnapper_pending_reply: {
           url: `item?id=${id}`,
           text: text
         }
       }, () => {
-        console.log('[LeadSniper] Saved HN pending reply. Redirecting...');
+        console.log('[LeadSnapper] Saved HN pending reply. Redirecting...');
         window.location.href = detailUrl;
       });
     }
@@ -464,7 +650,7 @@ async function simulateRPA(postEl, text) {
     
     const inputArea = getActiveEditor(postEl);
     if (!inputArea) {
-      console.error('[LeadSniper] RPA: Input editor not found.');
+      console.error('[LeadSnapper] RPA: Input editor not found.');
       return;
     }
     inputArea.focus();
@@ -480,13 +666,16 @@ async function simulateRPA(postEl, text) {
     inputArea.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ' ', keyCode: 32 }));
   } else {
     // LinkedIn
-    const commentBtn = postEl.querySelector('button[aria-label*="Comment"], button[aria-label*="评论"], button[aria-label*="comment"]');
+    const commentBtn = postEl.querySelector('button[aria-label*="Comment" i]') ||
+                       postEl.querySelector('button[aria-label*="评论"]') ||
+                       postEl.querySelector('button[data-control-name="comment"]') ||
+                       postEl.querySelector('button[aria-label*="comment" i]');
     if (commentBtn) commentBtn.click();
     await new Promise(r => setTimeout(r, 800));
     
     const inputArea = getActiveEditor(postEl);
     if (!inputArea) {
-      console.error('[LeadSniper] RPA: Input editor not found.');
+      console.error('[LeadSnapper] RPA: Input editor not found.');
       return;
     }
     inputArea.focus();
@@ -514,7 +703,7 @@ function updateRadar(statusText) {
     `;
     document.body.appendChild(radar);
   }
-  radar.innerHTML = `<span style="width:6px;height:6px;background:#ff2e4c;border-radius:50%;display:inline-block;"></span> LeadSniper [${PLATFORM}]: ${statusText} | Total: ${TOTAL_SCANNED}`;
+  radar.innerHTML = `<span style="width:6px;height:6px;background:#ff2e4c;border-radius:50%;display:inline-block;"></span> LeadSnapper [${PLATFORM}]: ${statusText} | Total: ${TOTAL_SCANNED}`;
 }
 
 const radarStyle = document.createElement('style');
@@ -648,7 +837,7 @@ function resumeAutoHunterPatrol() {
     huntBanner.remove();
     huntBanner = null;
   }
-  console.log('[LeadSniper] Auto-Hunter resumed patrol.');
+  console.log('[LeadSnapper] Auto-Snapper resumed patrol.');
 }
 
 const DEFAULT_INTENT_KEYWORDS = [
@@ -665,14 +854,14 @@ function buildKeywords(nicheText) {
     .filter(w => w.length > 3 && !['struggling', 'with', 'founders', 'seeking', 'growth', 'tools', 'help', 'and', 'for', 'the', 'this', 'that', 'from', 'your', 'about'].includes(w));
   
   INTENT_KEYWORDS = Array.from(new Set([...DEFAULT_INTENT_KEYWORDS, ...words]));
-  console.log('🎯 [LeadSniper] Rebuilt active keywords:', INTENT_KEYWORDS);
+  console.log('🎯 [LeadSnapper] Rebuilt active keywords:', INTENT_KEYWORDS);
 }
 
 function updateNicheAndKeywords() {
   try {
-    chrome.storage.local.get(['leadsniper_niche'], (res) => {
+    chrome.storage.local.get(['leadsnapper_niche'], (res) => {
       if (chrome.runtime.lastError || !res) return;
-      CURRENT_NICHE = res.leadsniper_niche || "AI Automation and SaaS Growth";
+      CURRENT_NICHE = res.leadsnapper_niche || "AI Automation and SaaS Growth";
       buildKeywords(CURRENT_NICHE);
     });
   } catch(e) {}
@@ -682,24 +871,30 @@ function updateNicheAndKeywords() {
 updateNicheAndKeywords();
 
 try {
-  chrome.storage.local.get(['leadsniper_active', 'leadsniper_autohunter', 'leadsniper_mute_sound', 'leadsniper_blacklist'], (res) => {
+  chrome.storage.local.get(['leadsnapper_active', 'leadsnapper_autohunter', 'leadsnapper_mute_sound', 'leadsnapper_blacklist'], (res) => {
     if (chrome.runtime.lastError) return;
-    IS_ACTIVE = res.leadsniper_active !== false;
+    IS_ACTIVE = res.leadsnapper_active !== false;
     updateRadar(IS_ACTIVE ? "READY" : "OFF");
     
-    IS_AUTO_HUNTER = res.leadsniper_autohunter === true;
+    IS_AUTO_HUNTER = res.leadsnapper_autohunter === true;
     if (IS_AUTO_HUNTER) {
       startAutoScroll();
     } else {
       stopAutoScroll();
     }
-    IS_MUTE_SOUND = res.leadsniper_mute_sound === true;
-    buildBlacklist(res.leadsniper_blacklist);
+    IS_ULTRA_SNIPER = res.leadsnapper_ultra_sniper === true;
+    IS_MUTE_SOUND = res.leadsnapper_mute_sound === true;
+    buildBlacklist(res.leadsnapper_blacklist);
   });
   
   chrome.storage.onChanged.addListener((changes) => {
-    if (changes.leadsniper_active) {
-      IS_ACTIVE = changes.leadsniper_active.newValue !== false;
+    if (changes.leadsnapper_autopilot) {
+      if (changes.leadsnapper_autopilot.newValue === true) {
+        isScrammed = false;
+      }
+    }
+    if (changes.leadsnapper_active) {
+      IS_ACTIVE = changes.leadsnapper_active.newValue !== false;
       const radar = document.getElementById('ls-radar');
       if (radar) radar.style.display = IS_ACTIVE ? 'flex' : 'none';
       if (IS_ACTIVE && IS_AUTO_HUNTER) {
@@ -708,12 +903,12 @@ try {
         stopAutoScroll();
       }
     }
-    if (changes.leadsniper_niche) {
-      CURRENT_NICHE = changes.leadsniper_niche.newValue || "AI Automation and SaaS Growth";
+    if (changes.leadsnapper_niche) {
+      CURRENT_NICHE = changes.leadsnapper_niche.newValue || "AI Automation and SaaS Growth";
       buildKeywords(CURRENT_NICHE);
     }
-    if (changes.leadsniper_autohunter) {
-      IS_AUTO_HUNTER = changes.leadsniper_autohunter.newValue === true;
+    if (changes.leadsnapper_autohunter) {
+      IS_AUTO_HUNTER = changes.leadsnapper_autohunter.newValue === true;
       if (IS_AUTO_HUNTER) {
         startAutoScroll();
       } else {
@@ -724,11 +919,14 @@ try {
         }
       }
     }
-    if (changes.leadsniper_mute_sound) {
-      IS_MUTE_SOUND = changes.leadsniper_mute_sound.newValue === true;
+    if (changes.leadsnapper_mute_sound) {
+      IS_MUTE_SOUND = changes.leadsnapper_mute_sound.newValue === true;
     }
-    if (changes.leadsniper_blacklist) {
-      buildBlacklist(changes.leadsniper_blacklist.newValue);
+    if (changes.leadsnapper_ultra_sniper) {
+      IS_ULTRA_SNIPER = changes.leadsnapper_ultra_sniper.newValue === true;
+    }
+    if (changes.leadsnapper_blacklist) {
+      buildBlacklist(changes.leadsnapper_blacklist.newValue);
     }
   });
 } catch(e) {
@@ -773,12 +971,20 @@ function processPost(post) {
     authorBio = a.authorBio || "";
   } catch(e) {}
 
+  // Deduplication
+  const signature = `${authorName}:${text.substring(0, 50)}`;
+  if (PROCESSED_POSTS.has(signature)) {
+    post.setAttribute('data-ls', 'processed');
+    return 0;
+  }
+  PROCESSED_POSTS.add(signature);
+
   // Local Blacklist Filter
   if (BLACKLIST_KEYWORDS.length > 0) {
     const lowerText = text.toLowerCase();
     const hasBlacklisted = BLACKLIST_KEYWORDS.some(kw => lowerText.includes(kw));
     if (hasBlacklisted) {
-      console.log(`[LeadSniper] << Blacklisted Post (Bypassed): ${authorName}`);
+      console.log(`[LeadSnapper] << Blacklisted Post (Bypassed): ${authorName}`);
       post.setAttribute('data-ls', 'blacklisted');
       post.style.borderLeft = "2px dashed #ff2e4c";
       post.style.opacity = "0.3";
@@ -788,7 +994,7 @@ function processPost(post) {
 
   // Local Keyword Pre-Filter
   if (!matchLocalKeywords(text)) {
-    console.log(`[LeadSniper] << Cold Post (Bypassed AI): ${authorName}`);
+    console.log(`[LeadSnapper] << Cold Post (Bypassed AI): ${authorName}`);
     post.setAttribute('data-ls', 'cold');
     post.style.borderLeft = "2px solid #333";
     post.style.opacity = "0.45";
@@ -799,9 +1005,16 @@ function processPost(post) {
   post.style.opacity = "0.9";
   updateRadar("SCANNING...");
 
-  console.log(`[LeadSniper] >> AI: ${authorName} (${text.substring(0, 40)}...)`);
+  console.log(`[LeadSnapper] >> AI: ${authorName} (${text.substring(0, 40)}...)`);
 
-  safeSendMessage({ type: 'ANALYZE_POST', id: postId, text, authorName, profileUrl, authorBio }, (response) => {
+  // Try to find the post url
+  let postUrl = profileUrl;
+  if (PLATFORM === 'X') {
+    const timeLink = post.querySelector('a[href*="/status/"]');
+    if (timeLink) postUrl = timeLink.href;
+  }
+
+  safeSendMessage({ type: 'ANALYZE_POST', id: postId, text, authorName, profileUrl, postUrl, authorBio, ultraSniper: IS_ULTRA_SNIPER }, (response) => {
     TOTAL_SCANNED++;
     if (!response || response.error) {
       post.style.borderLeft = "2px solid #666";
@@ -820,11 +1033,61 @@ function processPost(post) {
       post.style.opacity = "1";
       injectHUD(post, response.Confidence_Score, response.Intelligence_Summary || response.Pain_Point_Analysis, response.Enriched_Profile, response.Replies, 'HOT');
       
+      // AUTO-PILOT INITIATION
+      chrome.storage.local.get(['leadsnapper_autopilot', 'leadsnapper_autopilot_threshold', 'leadsnapper_license_valid', 'leadsnapper_license_tier', 'leadsnapper_autopilot_daily_count', 'leadsnapper_autopilot_daily_limit', 'leadsnapper_autopilot_last_reset_date'], (settings) => {
+        const autopilotActive = settings.leadsnapper_autopilot === true;
+        const threshold = settings.leadsnapper_autopilot_threshold || 85;
+        const hasLicense = settings.leadsnapper_license_valid === true;
+        const tier = settings.leadsnapper_license_tier || 'basic';
+        
+        if (autopilotActive && hasLicense && tier === 'pro' && !document.hidden && !isScrammed && response.Confidence_Score >= threshold) {
+          const today = new Date().toDateString();
+          let dailyCount = settings.leadsnapper_autopilot_daily_count || 0;
+          const dailyLimit = settings.leadsnapper_autopilot_daily_limit || 15;
+          const lastReset = settings.leadsnapper_autopilot_last_reset_date || "";
+
+          if (lastReset !== today) {
+            dailyCount = 0;
+            chrome.storage.local.set({
+              leadsnapper_autopilot_daily_count: 0,
+              leadsnapper_autopilot_last_reset_date: today
+            });
+          }
+
+          if (dailyCount < dailyLimit) {
+            chrome.storage.local.set({ leadsnapper_autopilot_daily_count: dailyCount + 1 });
+            triggerAutoPilot(post, response.Replies);
+          } else {
+            console.warn(`[LeadSnapper] Auto-Pilot daily limit of ${dailyLimit} reached. Skipping pre-fill.`);
+            const warningBadge = document.createElement('div');
+            warningBadge.className = 'ls-autopilot-limit-badge';
+            warningBadge.style.cssText = `
+              font-size: 10px; color: #ff9800; font-family: monospace;
+              background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800;
+              padding: 3px 8px; border-radius: 4px; display: inline-flex;
+              align-items: center; gap: 4px; margin-top: 6px; font-weight: bold;
+            `;
+            warningBadge.innerHTML = `⚠️ Auto-Pilot Daily Limit (${dailyLimit}) Reached`;
+            const hud = post.querySelector('.ls-hud');
+            if (hud) {
+              hud.appendChild(warningBadge);
+            } else {
+              post.appendChild(warningBadge);
+            }
+          }
+        }
+      });
+
       // AUTO-HUNTER LOCK TRIGGER
       if (IS_AUTO_HUNTER && response.Confidence_Score >= 85) {
-        IS_SCROLL_PAUSED = true;
-        playRadarLockBeep();
-        showLockBanner(postId, response.Confidence_Score, authorName, text);
+        if (!IS_ULTRA_SNIPER) {
+          IS_SCROLL_PAUSED = true;
+          playRadarLockBeep();
+          showLockBanner(postId, response.Confidence_Score, authorName, text);
+        } else {
+          console.log('[LeadSnapper] Ultra-Snapper mode: High intent target locked, bypassing scroll pause.');
+          playRadarLockBeep(); // Still beep, but keep going
+        }
       }
     } else {
       post.setAttribute('data-ls', 'news'); // Use 'news' as the catch-all blue class
@@ -842,7 +1105,20 @@ function processPost(post) {
 // ══════════════════════════════════════════════════════════
 
 function scanX() {
-  return document.querySelectorAll('article[data-testid="tweet"]');
+  const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
+  if (posts.length > 0) return posts;
+  
+  // Fallback for X redesigns
+  const cellInnerDivs = document.querySelectorAll('[data-testid="cellInnerDiv"]');
+  const fallbackPosts = [];
+  cellInnerDivs.forEach(div => {
+     const article = div.querySelector('article');
+     if (article) fallbackPosts.push(article);
+     else if (div.textContent.length > 20 && !div.closest('nav') && !div.closest('aside')) fallbackPosts.push(div);
+  });
+  if (fallbackPosts.length > 0) return fallbackPosts;
+  
+  return document.querySelectorAll('article');
 }
 
 function scanLinkedIn() {
@@ -857,7 +1133,7 @@ function scanLinkedIn() {
       'update-components': document.querySelectorAll('[class*="update-components"]').length,
       'profile-links': document.querySelectorAll('a[href*="/in/"]').length,
     };
-    console.log('[LeadSniper] LinkedIn DOM Diagnostic:', JSON.stringify(diag));
+    console.log('[LeadSnapper] LinkedIn DOM Diagnostic:', JSON.stringify(diag));
     
     // Determine which strategy to use
     if (diag['data-urn'] > 0) {
@@ -871,7 +1147,7 @@ function scanLinkedIn() {
     } else {
       scanLinkedIn._strategy = 'bruteforce';
     }
-    console.log('[LeadSniper] Using LinkedIn strategy:', scanLinkedIn._strategy);
+    console.log('[LeadSnapper] Using LinkedIn strategy:', scanLinkedIn._strategy);
   }
   
   let candidates;
@@ -1074,7 +1350,7 @@ function scanPosts() {
     found += processPost(post);
   }
 
-  if (found > 0) console.log(`[LeadSniper] Found ${found} new posts on ${PLATFORM}.`);
+  if (found > 0) console.log(`[LeadSnapper] Found ${found} new posts on ${PLATFORM}.`);
 }
 
 // ── MUTATION OBSERVER ──
@@ -1095,11 +1371,11 @@ setTimeout(scanPosts, 6000);
 try {
   if (PLATFORM === 'Reddit' || PLATFORM === 'HN') {
     const currentUrl = window.location.href;
-    chrome.storage.local.get(['leadsniper_pending_reply'], (res) => {
-      if (chrome.runtime.lastError || !res || !res.leadsniper_pending_reply) return;
-      const pending = res.leadsniper_pending_reply;
+    chrome.storage.local.get(['leadsnapper_pending_reply'], (res) => {
+      if (chrome.runtime.lastError || !res || !res.leadsnapper_pending_reply) return;
+      const pending = res.leadsnapper_pending_reply;
       if (currentUrl.includes(pending.url)) {
-        console.log('[LeadSniper] Found pending reply for this page! Waiting for editor...');
+        console.log('[LeadSnapper] Found pending reply for this page! Waiting for editor...');
         let attempts = 0;
         const interval = setInterval(() => {
           const editor = getActiveEditor(document.body);
@@ -1110,8 +1386,8 @@ try {
             setTimeout(() => {
               document.execCommand('selectAll', false, null);
               document.execCommand('insertText', false, pending.text);
-              console.log('[LeadSniper] Successfully auto-injected pending reply.');
-              chrome.storage.local.remove('leadsniper_pending_reply');
+              console.log('[LeadSnapper] Successfully auto-injected pending reply.');
+              chrome.storage.local.remove('leadsnapper_pending_reply');
             }, 500 + Math.random() * 1000);
           }
           attempts++;

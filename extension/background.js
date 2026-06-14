@@ -1,10 +1,10 @@
 const STORAGE_KEYS = {
-  API_KEY: 'leadsniper_api_key',
-  NICHE:   'leadsniper_niche',
-  ENDPOINT: 'leadsniper_endpoint',
-  MODEL: 'leadsniper_model',
-  LICENSE: 'leadsniper_license',
-  WEBHOOK: 'leadsniper_webhook'
+  API_KEY: 'leadsnapper_api_key',
+  NICHE:   'leadsnapper_niche',
+  ENDPOINT: 'leadsnapper_endpoint',
+  MODEL: 'leadsnapper_model',
+  LICENSE: 'leadsnapper_license',
+  WEBHOOK: 'leadsnapper_webhook'
 };
 
 // Queue system
@@ -15,15 +15,16 @@ const analysisCache = new Map();
 
 // Ultra Sniper Tracker
 let sessionUltraSniperTabs = 0;
+let unreadHotLeadsCount = 0;
 
 const REQUEST_TIMEOUT = 30000; // 30s timeout
 
 // Clear analysis cache when critical configs change
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  const keysToWatch = ['leadsniper_api_key', 'leadsniper_niche', 'leadsniper_value_prop', 'leadsniper_model', 'leadsniper_endpoint'];
+  const keysToWatch = ['leadsnapper_api_key', 'leadsnapper_niche', 'leadsnapper_value_prop', 'leadsnapper_model', 'leadsnapper_endpoint'];
   const hasRelevantChange = Object.keys(changes).some(key => keysToWatch.includes(key));
   if (hasRelevantChange) {
-    console.log("[LeadSniper] Config changed. Clearing post analysis cache.");
+    console.log("[LeadSnapper] Config changed. Clearing post analysis cache.");
     analysisCache.clear();
   }
 });
@@ -38,7 +39,7 @@ function enqueueRequest(fn) {
       const timeoutId = setTimeout(() => {
         if (!isSettled) {
           isSettled = true;
-          console.warn("[LeadSniper] Queue execution timed out after 30 seconds.");
+          console.warn("[LeadSnapper] Queue execution timed out after 30 seconds.");
           reject(new Error("Request timed out after 30 seconds."));
           next();
         }
@@ -62,7 +63,7 @@ function enqueueRequest(fn) {
         }
       } 
       catch (e) {
-        console.error("[LeadSniper] Request error:", e);
+        console.error("[LeadSnapper] Request error:", e);
         if (!isSettled) {
           isSettled = true;
           reject(e);
@@ -107,16 +108,16 @@ const DODO_PAYMENTS_ENDPOINT = "https://live.dodopayments.com/licenses/validate"
 async function verifyLicenseKey(licenseKey) {
   if (licenseKey === "LS-BYPASS-PRO" || licenseKey === "A9-MASTER-KEY") {
     await chrome.storage.local.set({ 
-      "leadsniper_license_valid": true, 
-      "leadsniper_license_tier": "pro",
+      "leadsnapper_license_valid": true, 
+      "leadsnapper_license_tier": "pro",
       [STORAGE_KEYS.LICENSE]: licenseKey 
     });
     return { success: true, tier: "pro" };
   }
   if (licenseKey === "LS-BYPASS-BASIC") {
     await chrome.storage.local.set({ 
-      "leadsniper_license_valid": true, 
-      "leadsniper_license_tier": "basic",
+      "leadsnapper_license_valid": true, 
+      "leadsnapper_license_tier": "basic",
       [STORAGE_KEYS.LICENSE]: licenseKey 
     });
     return { success: true, tier: "basic" };
@@ -154,8 +155,8 @@ async function verifyLicenseKey(licenseKey) {
       }
 
       await chrome.storage.local.set({ 
-        "leadsniper_license_valid": true, 
-        "leadsniper_license_tier": tier,
+        "leadsnapper_license_valid": true, 
+        "leadsnapper_license_tier": tier,
         [STORAGE_KEYS.LICENSE]: licenseKey 
       });
       return { success: true, tier: tier };
@@ -169,15 +170,15 @@ async function verifyLicenseKey(licenseKey) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SCRAM_KILL") {
-    console.log("[LeadSniper] SCRAM Stop triggered. Clearing request queue.");
+    console.log("[LeadSnapper] SCRAM Stop triggered. Clearing request queue.");
     requestQueue.length = 0;
     activeRequests = 0;
     if (currentActiveController) {
       try {
         currentActiveController.abort();
-        console.log("[LeadSniper] Active fetch request aborted.");
+        console.log("[LeadSnapper] Active fetch request aborted.");
       } catch (e) {
-        console.error("[LeadSniper] Error aborting fetch:", e);
+        console.error("[LeadSnapper] Error aborting fetch:", e);
       }
       currentActiveController = null;
     }
@@ -199,19 +200,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_RADAR_TARGETS') {
+    unreadHotLeadsCount = 0;
+    chrome.action.setBadgeText({ text: '' }).catch(()=>{});
     sendResponse({ targets: storedRadarTargets });
     return true;
   }
 
+  if (message.type === 'UPDATE_TARGET_STATUS') {
+    const { targetId, status } = message;
+    const idx = storedRadarTargets.findIndex(t => t.id === targetId);
+    if (idx !== -1) {
+      if (status === 'archived') {
+        const target = storedRadarTargets[idx];
+        storedRadarTargets.splice(idx, 1);
+        
+        // Add to downvoted list
+        chrome.storage.local.get(['leadsnapper_downvoted_handles'], (data) => {
+          const list = data.leadsnapper_downvoted_handles || [];
+          const handle = (target.name || '').toLowerCase();
+          if (handle && !list.includes(handle)) {
+            list.push(handle);
+            chrome.storage.local.set({ 'leadsnapper_downvoted_handles': list }).catch(()=>{});
+          }
+        });
+      } else {
+        storedRadarTargets[idx].status = status;
+      }
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: 'Target not found' });
+    }
+    return true;
+  }
+
   if (message.type === 'GET_WEBHOOK_CONFIG') {
-    chrome.storage.local.get([STORAGE_KEYS.WEBHOOK, 'leadsniper_auto_sync'], (config) => {
-      sendResponse({ webhook: config[STORAGE_KEYS.WEBHOOK] || '', autoSync: config['leadsniper_auto_sync'] !== false });
+    chrome.storage.local.get([STORAGE_KEYS.WEBHOOK, 'leadsnapper_auto_sync'], (config) => {
+      sendResponse({ webhook: config[STORAGE_KEYS.WEBHOOK] || '', autoSync: config['leadsnapper_auto_sync'] !== false });
     });
     return true;
   }
 
   if (message.type === 'UNIVERSAL_COMMAND') {
-    console.log("[LeadSniper] Universal Command Received:", message.command);
+    console.log("[LeadSnapper] Universal Command Received:", message.command);
     message.tabId = sender.tab ? sender.tab.id : null;
     handleUniversalCommand(message)
       .then(sendResponse)
@@ -220,7 +250,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'ENRICH_ON_DEMAND') {
-    console.log("[LeadSniper] On-Demand Enrichment Requested for target ID:", message.targetId);
+    console.log("[LeadSnapper] On-Demand Enrichment Requested for target ID:", message.targetId);
     handleOnDemandEnrichment(message)
       .then(sendResponse)
       .catch(err => sendResponse({ error: err.message }));
@@ -231,24 +261,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   const postId = message.id;
   if (postId && analysisCache.has(postId)) {
-    console.log(`[LeadSniper] Cache Hit for post ID ${postId}. Returning cached analysis.`);
+    console.log(`[LeadSnapper] Cache Hit for post ID ${postId}. Returning cached analysis.`);
     sendResponse(analysisCache.get(postId));
     return true;
   }
   
-  console.log("[LeadSniper] Analysis Requested for:", message.authorName);
+  console.log("[LeadSnapper] Analysis Requested for:", message.authorName);
   message.tabId = sender.tab ? sender.tab.id : null;
   
   handleAnalysis(message)
     .then(result => {
-      console.log("[LeadSniper] Analysis Complete:", result);
+      console.log("[LeadSnapper] Analysis Complete:", result);
       if (postId && result && !result.error && !result.locked) {
         analysisCache.set(postId, result);
       }
       sendResponse(result);
     })
     .catch(err => {
-      console.error("[LeadSniper] Background Error:", err);
+      console.error("[LeadSnapper] Background Error:", err);
       sendResponse({ error: err.message });
     });
   return true;
@@ -269,22 +299,47 @@ async function handleAnalysis(msg) {
   }
   
   const licenseKey = config[STORAGE_KEYS.LICENSE] || '';
-  const isLicenseValid = config['leadsniper_license_valid'] === true;
+  const isLicenseValid = config['leadsnapper_license_valid'] === true;
 
   if (!IS_DEV_MODE && !isLicenseValid) {
-    console.warn('[LeadSniper] NO VALID LICENSE. Returning locked state.');
+    console.warn('[LeadSnapper] NO VALID LICENSE. Returning locked state.');
     return { locked: true, message: 'License Required. Please activate in the extension popup.' };
   }
 
   if (!config[STORAGE_KEYS.API_KEY]) {
-     console.error('[LeadSniper] No API Key configured!');
+     console.error('[LeadSnapper] No API Key configured!');
      return { error: 'API_KEY_MISSING', message: 'API Key not configured.' };
+  }
+
+  // Focus Filter Exclusions (Negative keywords and handles)
+  const focusFilterText = config['leadsnapper_blacklist'] || '';
+  const focusFilters = focusFilterText.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const lowerPostText = (postText || '').toLowerCase();
+  const lowerAuthorName = (msg.authorName || '').toLowerCase();
+  const lowerProfileUrl = (msg.profileUrl || '').toLowerCase();
+  
+  const matchesFocusFilter = focusFilters.some(filter => {
+    if (filter.startsWith('@')) {
+      const handle = filter.substring(1);
+      return lowerAuthorName.includes(handle) || lowerProfileUrl.includes(handle);
+    } else {
+      return lowerPostText.includes(filter);
+    }
+  });
+
+  if (matchesFocusFilter) {
+    console.log(`[LeadSnapper] Focus Filter matched for target ${msg.authorName}. Auto-excluding.`);
+    return {
+      Confidence_Score: 0,
+      Category: 'CASUAL_ART',
+      Pain_Point_Analysis: 'Filtered by user Focus Filter (exclusion match).'
+    };
   }
 
   // Local check for obvious self-promotional keywords to bypass API calls
   const selfPromoRegex = /\b(i built|my new|just launched|check out my|subscribe to|dm me for|newsletter|grab my|use my code|read my blog|free guide|here is a guide|how i did)\b/i;
   if (selfPromoRegex.test(postText)) {
-    console.log("[LeadSniper] Local check: Self-promo detected. Bypassing API.");
+    console.log("[LeadSnapper] Local check: Self-promo detected. Bypassing API.");
     return {
       Confidence_Score: 10,
       Category: 'INDUSTRY_NEWS',
@@ -301,6 +356,15 @@ async function handleAnalysis(msg) {
     Category: scoreRaw.Category || 'Unknown',
     Pain_Point_Analysis: scoreRaw.Pain_Point_Analysis
   };
+
+  // Apply Downvoted Handles penalty (-15 points)
+  const downvotedData = await new Promise(r => chrome.storage.local.get(['leadsnapper_downvoted_handles'], r));
+  const downvotedList = downvotedData.leadsnapper_downvoted_handles || [];
+  const lowerName = (msg.authorName || '').toLowerCase();
+  if (downvotedList.includes(lowerName)) {
+    console.log(`[LeadSnapper] Target ${msg.authorName} is in downvoted handles list. Applying -15 points penalty.`);
+    result.Confidence_Score = Math.max(0, result.Confidence_Score - 15);
+  }
   
   let profileData = null;
   let repliesData = null;
@@ -308,7 +372,7 @@ async function handleAnalysis(msg) {
 
   // Phase 2: Enrichment if Hot Lead
   if (result.Confidence_Score >= 75) {
-     console.log("[LeadSniper] Hot Lead Detected! Commencing Background Enrichment...");
+     console.log("[LeadSnapper] Hot Lead Detected! Commencing Background Enrichment...");
      profileData = { bio: msg.authorBio || "Unknown", followers: "Unknown", company: "Unknown" };
      if (!msg.authorBio && msg.profileUrl) {
         profileData = await fetchProfile(msg.profileUrl);
@@ -320,22 +384,21 @@ async function handleAnalysis(msg) {
      result.Intelligence_Summary = intelRaw.Intelligence_Summary || "Ready for engagement.";
      reasonText = result.Intelligence_Summary;
      result.Replies = intelRaw.Replies || { 
-       Professional: "Saw your post regarding scale limitations. We specialize in zero-latency infrastructure overlays that bypass standard pipeline bottlenecks. Let's align.",
-       Humor: "Nothing like watching standard selector engines break on React re-renders. If you're ready for an AI agent that doesn't trigger cloud alerts, check our stealth stack.",
-       Director: "Every scalable system is just a well-directed sequence of state changes. Let's rewrite the script on your acquisition flow—no backstage setup required."
+       ShortOpener: "Saw your post regarding scale limitations. We specialize in zero-latency infrastructure overlays that bypass standard pipeline bottlenecks. Let's align.",
+       LinkedInRequest: "Hi, saw your post about scale limitations. Let's connect!"
      };
      repliesData = result.Replies;
   }
 
   // Webhook Auto-Push (Data Pipeline)
-  if (result.Confidence_Score >= 75 && config[STORAGE_KEYS.WEBHOOK] && config['leadsniper_auto_sync'] !== false) {
-    console.log("[LeadSniper] Pushing to Webhook Endpoint...");
+  if (result.Confidence_Score >= 75 && config[STORAGE_KEYS.WEBHOOK] && config['leadsnapper_auto_sync'] !== false) {
+    console.log("[LeadSnapper] Pushing to Webhook Endpoint...");
     try {
       fetch(config[STORAGE_KEYS.WEBHOOK], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source: 'LeadSniper_V3',
+          source: 'LeadSnapper_V3',
           timestamp: new Date().toISOString(),
           target_name: msg.authorName || 'Target',
           intent_score: result.Confidence_Score,
@@ -345,9 +408,33 @@ async function handleAnalysis(msg) {
           profile_data: profileData,
           outreach_drafts: repliesData
         })
-      }).catch(e => console.error("[LeadSniper] Webhook Async Push Failed:", e));
+      }).catch(e => console.error("[LeadSnapper] Webhook Async Push Failed:", e));
     } catch(e) {}
   }
+
+  // Load and update history (Signal Trail)
+  const historyData = await new Promise(r => chrome.storage.local.get(['leadsnapper_profiles_history'], r));
+  const historyMap = historyData.leadsnapper_profiles_history || {};
+  const handleKey = (msg.authorName || 'Target').toLowerCase();
+  
+  if (!historyMap[handleKey]) {
+    historyMap[handleKey] = [];
+  }
+  
+  historyMap[handleKey].push({
+    timestamp: new Date().toISOString(),
+    score: result.Confidence_Score,
+    reason: reasonText,
+    postText: postText
+  });
+  
+  // Keep only last 10 entries to avoid bloating local storage
+  if (historyMap[handleKey].length > 10) {
+    historyMap[handleKey].shift();
+  }
+  
+  await new Promise(r => chrome.storage.local.set({ 'leadsnapper_profiles_history': historyMap }, r));
+  const targetHistory = historyMap[handleKey];
 
   // Sync to Radar side panel with comprehensive context object
   const radarPayload = { 
@@ -362,28 +449,35 @@ async function handleAnalysis(msg) {
     reason: reasonText,
     profile: profileData,
     replies: repliesData,
-    autoCaptured: false
+    autoCaptured: false,
+    history: targetHistory
   };
 
-  // Ultra-Sniper Background Auto-Open Logic
+  // Ultra-Snapper Background Auto-Open Logic
   if (msg.ultraSniper && result.Confidence_Score >= 80) {
-    const maxTabs = config['leadsniper_ultra_max_tabs'] || 10;
+    const maxTabs = config['leadsnapper_ultra_max_tabs'] || 10;
     if (sessionUltraSniperTabs < maxTabs) {
       const targetUrl = msg.postUrl || msg.profileUrl;
       if (targetUrl) {
-        console.log(`[LeadSniper] Ultra-Sniper: Auto-opening tab for ${msg.authorName} (${sessionUltraSniperTabs + 1}/${maxTabs})`);
+        console.log(`[LeadSnapper] Ultra-Snapper: Auto-opening tab for ${msg.authorName} (${sessionUltraSniperTabs + 1}/${maxTabs})`);
         chrome.tabs.create({ url: targetUrl, active: false }).catch(() => {});
         sessionUltraSniperTabs++;
         radarPayload.autoCaptured = true;
       }
     } else {
-      console.warn(`[LeadSniper] Ultra-Sniper: Max tabs (${maxTabs}) reached for this session.`);
+      console.warn(`[LeadSnapper] Ultra-Snapper: Max tabs (${maxTabs}) reached for this session.`);
     }
   }
 
   storedRadarTargets.push(radarPayload);
   if (storedRadarTargets.length > 50) storedRadarTargets.shift();
   chrome.runtime.sendMessage({ type: 'SYNC_3D_RADAR', payload: radarPayload }).catch(()=>{});
+
+  if (result.Confidence_Score >= 85) {
+    unreadHotLeadsCount++;
+    chrome.action.setBadgeText({ text: unreadHotLeadsCount.toString() }).catch(()=>{});
+    chrome.action.setBadgeBackgroundColor({ color: '#EF4444' }).catch(()=>{});
+  }
 
   return result;
 }
@@ -415,19 +509,18 @@ async function handleOnDemandEnrichment(msg) {
   target.profile = profileData;
   target.reason = intelRaw.Intelligence_Summary || target.reason;
   target.replies = intelRaw.Replies || { 
-    Professional: "Saw your post. We specialize in solutions for this. Let's align.",
-    Humor: "Just ran across this. If you need a robot assistant, check us out.",
-    Director: "Every system is a sequence of state changes. Let's rewrite yours."
+    ShortOpener: "Saw your post. We specialize in solutions for this. Let's align.",
+    LinkedInRequest: "Hi, saw your post. Let's connect!"
   };
   
   // Also push to webhook if configured
-  if (config[STORAGE_KEYS.WEBHOOK] && config['leadsniper_auto_sync'] !== false) {
+  if (config[STORAGE_KEYS.WEBHOOK] && config['leadsnapper_auto_sync'] !== false) {
     try {
       fetch(config[STORAGE_KEYS.WEBHOOK], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source: 'LeadSniper_V3_OnDemand',
+          source: 'LeadSnapper_V3_OnDemand',
           timestamp: new Date().toISOString(),
           target_name: target.name,
           intent_score: target.score,
@@ -445,7 +538,7 @@ async function handleOnDemandEnrichment(msg) {
 
 async function fetchProfile(url) {
   try {
-    console.log("[LeadSniper] Fetching Profile Enrichment:", url);
+    console.log("[LeadSnapper] Fetching Profile Enrichment:", url);
     const res = await fetchWithTimeout(url, { 
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } 
     });
@@ -459,7 +552,7 @@ async function fetchProfile(url) {
       company: titleMatch ? titleMatch[1].split('|')[0].trim() : "Target Organization"
     };
   } catch(e) {
-    console.warn("[LeadSniper] Profile Enrichment Failed (Likely CORS/Auth):", e.message);
+    console.warn("[LeadSnapper] Profile Enrichment Failed (Likely CORS/Auth):", e.message);
     return { bio: "Protected/Invalid URL", followers: "?", company: "?" };
   }
 }
@@ -486,14 +579,14 @@ Output ONLY valid JSON:
 {
   "Confidence_Score": 0-100, 
   "Category": "COMMERCIAL_LEAD" | "INDUSTRY_NEWS" | "CASUAL_ART",
-  "Pain_Point_Analysis": "Detail why they have genuine intent and are NOT a promoter."
+  "Pain_Point_Analysis": "Strictly format as: [User Role/Title] | [Intent Trigger (e.g. Complaining/Seeking Alternative)] | [1-sentence pain point summary under 15 words]."
 }`;
   return await sendPrompt(config, prompt, postText);
 }
 
 async function callAIEnrich(config, postText, profileData) {
-  const valueProp = config['leadsniper_value_prop'] || "";
-  const style = config['leadsniper_reply_style'] || "Geek";
+  const valueProp = config['leadsnapper_value_prop'] || "";
+  const style = config['leadsnapper_reply_style'] || "Geek";
   
   let styleInstruction = "";
   if (style === "Warm") {
@@ -520,11 +613,10 @@ CRITICAL STYLE MANUAL:
 
 Provide a deep commercial intent analysis. Output ONLY valid JSON:
 {
-  "Intelligence_Summary": "1-sentence clear tactical engineering Intel on how to approach.",
+  "Intelligence_Summary": "Strictly format as: [User Role/Title] | [Intent Trigger] | [1-sentence core pain point summary under 15 words].",
   "Replies": {
-    "Professional": "A highly professional, logic-first technical reply.",
-    "Humor": "A witty, dry developer/engineering humor reply.",
-    "Director": "A system-architect/storytelling-style technical reply."
+    "ShortOpener": "A highly concise 1-2 sentence DM opener under 140 characters directly addressing their pain point.",
+    "LinkedInRequest": "A personalized LinkedIn connection request note under 150 characters."
   }
 }`;
   return await sendPrompt(config, prompt, "Enrich Target");
@@ -619,15 +711,15 @@ let lastLicenseChecked = "";
 
 async function checkLicense(key) {
   if (!key) {
-    await chrome.storage.local.set({ "leadsniper_license_valid": false, "leadsniper_license_tier": null });
+    await chrome.storage.local.set({ "leadsnapper_license_valid": false, "leadsnapper_license_tier": null });
     return false;
   }
   if (key === "A9-MASTER-KEY" || key === "LS-BYPASS-PRO") {
-    await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": "pro" });
+    await chrome.storage.local.set({ "leadsnapper_license_valid": true, "leadsnapper_license_tier": "pro" });
     return true;
   }
   if (key === "LS-BYPASS-BASIC") {
-    await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": "basic" });
+    await chrome.storage.local.set({ "leadsnapper_license_valid": true, "leadsnapper_license_tier": "basic" });
     return true;
   }
   if (key === lastLicenseChecked && isLicenseValid) return true;
@@ -644,7 +736,7 @@ async function checkLicense(key) {
        const valid = key.length > 10;
        if (valid) {
          let tier = key.toLowerCase().includes("basic") ? "basic" : "pro";
-         await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+         await chrome.storage.local.set({ "leadsnapper_license_valid": true, "leadsnapper_license_tier": tier });
        }
        return valid; 
     }
@@ -663,16 +755,16 @@ async function checkLicense(key) {
       } else if (productId.toLowerCase().includes("basic") || key.toLowerCase().includes("basic")) {
         tier = "basic";
       }
-      await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+      await chrome.storage.local.set({ "leadsnapper_license_valid": true, "leadsnapper_license_tier": tier });
     } else {
-      await chrome.storage.local.set({ "leadsniper_license_valid": false, "leadsniper_license_tier": null });
+      await chrome.storage.local.set({ "leadsnapper_license_valid": false, "leadsnapper_license_tier": null });
     }
     return isLicenseValid;
   } catch(e) {
     const valid = key.length > 10;
     if (valid) {
       let tier = key.toLowerCase().includes("basic") ? "basic" : "pro";
-      await chrome.storage.local.set({ "leadsniper_license_valid": true, "leadsniper_license_tier": tier });
+      await chrome.storage.local.set({ "leadsnapper_license_valid": true, "leadsnapper_license_tier": tier });
     }
     return valid;
   }

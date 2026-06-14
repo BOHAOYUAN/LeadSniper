@@ -3,9 +3,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const DIST_STORE_DIR = path.join(__dirname, 'dist_store');
-const OUTPUT_ZIP = path.join(__dirname, 'LeadSniper_Store.zip');
+const OUTPUT_ZIP = path.join(__dirname, 'LeadSnapper_Store.zip');
 
-console.log('🚀 Starting clean store build for LeadSniper (No Obfuscation)...');
+console.log('🚀 Starting clean store build for LeadSnapper (No Obfuscation)...');
 
 // 1. Clean previous build
 if (fs.existsSync(DIST_STORE_DIR)) {
@@ -48,14 +48,14 @@ FILES_TO_COPY.forEach(file => {
 });
 
 // 3. Zip the dist_store folder using PowerShell (native to Windows)
-console.log('📦 Compressing files into LeadSniper_Store.zip...');
+console.log('📦 Compressing files into LeadSnapper_Store.zip...');
 try {
   const psCommand = `powershell -Command "Compress-Archive -Path '${DIST_STORE_DIR}\\*' -DestinationPath '${OUTPUT_ZIP}' -Force"`;
   execSync(psCommand, { stdio: 'inherit' });
-  console.log('✅ LeadSniper_Store.zip created successfully!');
+  console.log('✅ LeadSnapper_Store.zip created successfully!');
 } catch (err) {
   console.error('❌ Compression failed:', err.message);
   process.exit(1);
 }
 
-console.log('\n🎉 Store build completed! Upload LeadSniper_Store.zip to Microsoft Partner Center / Chrome Web Store.');
+console.log('\n🎉 Store build completed! Upload LeadSnapper_Store.zip to Microsoft Partner Center / Chrome Web Store.');

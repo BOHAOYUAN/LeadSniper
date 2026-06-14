@@ -75,15 +75,15 @@ function Resize-Image {
 }
 
 # 1. Resize Logo to EXACTLY 300x300 (Microsoft Edge recommended format)
-Resize-Image "e:\project\LeadSniper\leadsniper_logo.png" "e:\project\LeadSniper\leadsniper_logo_300.png" 300 300 "stretch"
+Resize-Image "e:\project\LeadSnapper\leadsnapper_logo.png" "e:\project\LeadSnapper\leadsnapper_logo_300.png" 300 300 "stretch"
 
 # 2. Resize Small Promo Tile to EXACTLY 440x280 (Microsoft Edge STRICT requirement)
-Resize-Image "e:\project\LeadSniper\leadsniper_promo_tile.png" "e:\project\LeadSniper\leadsniper_promo_tile_440.png" 440 280 "crop"
+Resize-Image "e:\project\LeadSnapper\leadsnapper_promo_tile.png" "e:\project\LeadSnapper\leadsnapper_promo_tile_440.png" 440 280 "crop"
 
 # 3. Resize Large Promo Tile to EXACTLY 1400x560 (Microsoft Edge STRICT requirement)
-Resize-Image "e:\project\LeadSniper\leadsniper_large_promo_tile.png" "e:\project\LeadSniper\leadsniper_large_promo_tile_1400.png" 1400 560 "crop"
+Resize-Image "e:\project\LeadSnapper\leadsnapper_large_promo_tile.png" "e:\project\LeadSnapper\leadsnapper_large_promo_tile_1400.png" 1400 560 "crop"
 
 Write-Output "✅ Images successfully resized to exact Microsoft Partner Center dimensions!"
-Write-Output "   - Logo (300x300): e:\project\LeadSniper\leadsniper_logo_300.png"
-Write-Output "   - Small Tile (440x280): e:\project\LeadSniper\leadsniper_promo_tile_440.png"
-Write-Output "   - Large Tile (1400x560): e:\project\LeadSniper\leadsniper_large_promo_tile_1400.png"
+Write-Output "   - Logo (300x300): e:\project\LeadSnapper\leadsnapper_logo_300.png"
+Write-Output "   - Small Tile (440x280): e:\project\LeadSnapper\leadsnapper_promo_tile_440.png"
+Write-Output "   - Large Tile (1400x560): e:\project\LeadSnapper\leadsnapper_large_promo_tile_1400.png"

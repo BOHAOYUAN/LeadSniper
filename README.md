@@ -1,8 +1,8 @@
-# 🎯 LeadSniper — B2B Social Intent Radar & One-Click AI Outreach
+# 🎯 LeadSnapper — B2B Social Intent Radar & One-Click AI Outreach
 
-[![LeadSniper Banner](leadsniper_large_promo_tile.png)](https://bohaoyuan.github.io/LeadSniper/)
+[![LeadSnapper Banner](leadsnapper_large_promo_tile.png)](https://bohaoyuan.github.io/LeadSnapper/)
 
-> Hey, I'm Bohao, the developer of LeadSniper.  
+> Hey, I'm Bohao, the developer of LeadSnapper.  
 > I built this tool because I was sick and tired of manually scrolling through social feeds to find B2B leads. My hands were about to fall off, and my efficiency was garbage.  
 > So I wrote this local-first AI intent radar. **It's 100% transparent: your API keys, credentials, and leads are saved directly in your browser's local storage. I can never touch them.**
 
@@ -10,13 +10,13 @@
 
 ### ⚡ 30-Second Quick Start
 
-1. **Extract:** Download and unzip `LeadSniper_Secure.zip` to a safe folder.
+1. **Extract:** Download and unzip `LeadSnapper_Secure.zip` to a safe folder.
 2. **Extensions:** Open your browser and navigate to `chrome://extensions/` (or `edge://extensions/`).
 3. **Developer Mode:** Toggle **ON** the "Developer mode" switch in the top-right corner.
-4. **Load Unpacked:** Click **"Load unpacked"** in the top-left and select the extracted `LeadSniper/` folder (the one containing `manifest.json`).
-5. **Pin It:** Click the puzzle icon in your browser toolbar and pin **LeadSniper** for easy access.
+4. **Load Unpacked:** Click **"Load unpacked"** in the top-left and select the extracted `LeadSnapper/` folder (the one containing `manifest.json`).
+5. **Pin It:** Click the puzzle icon in your browser toolbar and pin **LeadSnapper** for easy access.
 
-For a full step-by-step onboarding walkthrough, read the [📖 LeadSniper User Manual](LeadSniper-Documentation.md).
+For a full step-by-step onboarding walkthrough, read the [📖 LeadSnapper User Manual](LeadSnapper-Documentation.md).
 
 ---
 
@@ -27,11 +27,11 @@ Organize social leads visually by priority and platform channels. Tapping any ta
 
 ### 2. DeepAI Intent Scoring (DeepSeek V3 & OpenAI)
 Evaluate posts dynamically with a local scoring engine (0-100) calibrated to your exact target audience and value proposition.
-*   **"Lethal Rules" Filters:** Automatically weed out self-promotional "expert threads", bots, affiliate loops, and newsletter spam to save API tokens and outreach effort.
+*   **"Smart Rules" Filters:** Automatically weed out self-promotional "expert threads", bots, affiliate loops, and newsletter spam to save API tokens and outreach effort.
 *   **Color-Coded Classification:** Hot Intent leads (score ≥80) get immediate crosshairs, while potential nodes are mapped for on-demand review.
 
-### 3. Ultra-Sniper Mode (PRO Automation)
-Background auto-capturing of high-intent targets. Let the browser scroll page feeds silently, evaluate posts, and automatically stack hot leads in the Snipe Queue without pausing or interrupting your scrolling.
+### 3. Ultra-Snapper Mode (PRO Automation)
+Background auto-capturing of high-intent targets. Let the browser scroll page feeds silently, evaluate posts, and automatically stack hot leads in the Capture Queue without pausing or interrupting your scrolling.
 
 ### 4. Outreach Strategy Matrix
 Generate **3 distinct outbound drafts** tailored to the target’s specific context:
@@ -47,7 +47,7 @@ Connected leads, post URLs, author metadata, and generated outreach logs can be 
 
 ## 🛡️ Bring Your Own Key (BYOK) & Privacy
 
-LeadSniper operates with a strict **local-first architecture**:
+LeadSnapper operates with a strict **local-first architecture**:
 *   **No Third-Party Intermediaries:** Credentials, license statuses, leads, and histories are saved securely in your browser's local client storage (`chrome.storage.local`).
 *   **Direct AI Endpoints:** Connection goes directly from your browser to your chosen AI vendor (e.g. DeepSeek or OpenAI). We never proxy your API traffic.
 *   **Zero Markup Cost:** Pay raw API tokens directly to the vendor, avoiding high SaaS margins (averaging pennies per 1,000 lead scans).
@@ -61,10 +61,10 @@ Choose the early-adopter lifetime license that matches your growth velocity befo
 | Feature / Metric | LTD Basic — $199 | LTD Pro — $588 (🔥 Only 7 Left) |
 | :--- | :---: | :---: |
 | **Daily Outreach Drafts** | 15 / day | **Unlimited** |
-| **Auto-Hunter Mode** | ✅ | ✅ |
+| **Auto-Snapper Mode** | ✅ | ✅ |
 | **Auto-Pilot Mode** | ❌ | **✅ (Unlocked)** |
 | **3D Concentric Radar Grid** | ❌ | **✅ (Unlocked)** |
-| **Ultra-Sniper Background Auto-Capture** | ❌ | **✅ (Unlocked)** |
+| **Ultra-Snapper Background Auto-Capture** | ❌ | **✅ (Unlocked)** |
 | **Support SLA** | General | **Priority Setup & 24h Response** |
 | **Configuration Audit** | ❌ | **✅ Free 1-on-1 Niche Calibrator (Value $99)** |
 | **Updates Coverage** | 12 Months Free Updates | **12 Months Free (Keep software working forever)** |
@@ -76,12 +76,12 @@ Choose the early-adopter lifetime license that matches your growth velocity befo
 
 ## 🔌 Cloud CRM Webhook Integration
 
-LeadSniper supports exporting lead dossiers directly to automation tools like Make.com, Zapier, or custom backends.
+LeadSnapper supports exporting lead dossiers directly to automation tools like Make.com, Zapier, or custom backends.
 
 ### Webhook JSON Payload Schema:
 ```json
 {
-  "source": "LeadSniper_V3_Radar",
+  "source": "LeadSnapper_V3_Radar",
   "timestamp": "2026-06-09T18:27:14.000Z",
   "target_name": "John Doe",
   "intent_score": 92,
@@ -92,7 +92,7 @@ LeadSniper supports exporting lead dossiers directly to automation tools like Ma
     "bio": "Founder of Acme SaaS. Ex-YCombinator. Building future-proof B2B software."
   },
   "outreach_drafts": {
-    "Professional": "Hey John, sorry to hear about the churn increase. If you are looking to automate CS pipelines without complex dashboards, LeadSniper fits that description perfectly. Glad to give you a walk-through.",
+    "Professional": "Hey John, sorry to hear about the churn increase. If you are looking to automate CS pipelines without complex dashboards, LeadSnapper fits that description perfectly. Glad to give you a walk-through.",
     "Humor": "Hey John, pricing changes and 15% churn—nothing like manual account saving to start the day. If you want a quick shortcut to automate customer success before you lose your mind, let's chat.",
     "Director": "I saw your note on Acme SaaS and pricing friction. I've worked with B2B founders who automated this exact problem away in a week. Happy to show you how."
   }
@@ -102,7 +102,7 @@ LeadSniper supports exporting lead dossiers directly to automation tools like Ma
 ---
 
 ## 🔒 30-Day Client-Closing Guarantee
-If you do not close at least one high-value client using LeadSniper within 30 days, email us at **hy@hydigital.studio** and we will refund 100% of your payment. No questions asked.
+If you do not close at least one high-value client using LeadSnapper within 30 days, email us at **hy@hydigital.studio** and we will refund 100% of your payment. No questions asked.
 
 ---
 
@@ -118,7 +118,7 @@ If you do not close at least one high-value client using LeadSniper within 30 da
   <img src="haoyuan.jpg" alt="Haoyuan Bo" width="130" style="border-radius: 50%;" />
 </p>
 
-Hi, I'm **Haoyuan Bo** (known as Bohao Yuan), a B2B growth engineer and the creator of LeadSniper. I specialize in building custom automation pipelines, browser extensions, and semantic search systems to help solo founders, digital agencies, and B2B sales teams streamline their outbound operations.
+Hi, I'm **Haoyuan Bo** (known as Bohao Yuan), a B2B growth engineer and the creator of LeadSnapper. I specialize in building custom automation pipelines, browser extensions, and semantic search systems to help solo founders, digital agencies, and B2B sales teams streamline their outbound operations.
 
 If you have any feedback, custom feature requests, or need help setting up your outbound campaign, feel free to reach out to me directly!
 

@@ -1,4 +1,4 @@
-// LeadSniper B2B Sidepanel Solution Engine (Refactored & Three.js Removed)
+// LeadSnapper B2B Sidepanel Solution Engine (Refactored & Three.js Removed)
 
 // DOM Elements
 const emptyStateEl = document.getElementById('empty-state');
@@ -8,15 +8,21 @@ const signalsListEl = document.getElementById('signals-list');
 const statsCounterEl = document.getElementById('stats-counter');
 const statsEl = document.getElementById('stats'); // Advanced metric telemetry element
 const liveTickerEl = document.getElementById('stealth-live-ticker');
+const signalTrailListEl = document.getElementById('signal-trail-list');
+
+// Action Elements
+const syncWebhookBtn = document.getElementById('syncWebhookBtn');
+const directSnipeBtn = document.getElementById('directSnipeBtn');
+const btnShareSnapshot = document.getElementById('btn-share-snapshot');
+const btnStatusDmed = document.getElementById('btn-status-dmed');
+const btnStatusArchive = document.getElementById('btn-status-archive');
+const btnOpenProfile = document.getElementById('btn-open-profile');
+const btnOpenDm = document.getElementById('btn-open-dm');
 
 // CLI Elements
 const cliInput = document.getElementById('cli-input');
 const cliSubmit = document.getElementById('cli-submit');
 const universalCli = document.getElementById('universal-cli') || (cliInput ? cliInput.parentElement : null);
-
-// Action Elements
-const syncWebhookBtn = document.getElementById('syncWebhookBtn');
-const directSnipeBtn = document.getElementById('directSnipeBtn');
 
 let targets = []; // Array of detected targets
 let currentSelectedTarget = null;
@@ -72,9 +78,8 @@ function selectTarget(target) {
   const bioEl = document.getElementById('profile-bio');
   const tagsContainer = document.getElementById('profile-tags');
 
-  const profEl = document.getElementById('reply-prof');
-  const humorEl = document.getElementById('reply-humor');
-  const dirEl = document.getElementById('reply-director');
+  const shortOpenerEl = document.getElementById('reply-short-opener');
+  const linkedinRequestEl = document.getElementById('reply-linkedin-request');
 
   if (nameEl) nameEl.textContent = ((target.name || 'TARGET NODE') + '').toUpperCase();
   if (scoreEl) scoreEl.textContent = target.score || '--';
@@ -119,6 +124,55 @@ function selectTarget(target) {
     }
   }
 
+  // Update Status Buttons
+  if (btnStatusDmed) {
+    if (target.status === 'dmed') {
+      btnStatusDmed.style.background = '#10B981';
+      btnStatusDmed.style.color = '#FFFFFF';
+      btnStatusDmed.innerHTML = '<i class="fas fa-check-double"></i> DM\'ed';
+    } else {
+      btnStatusDmed.style.background = 'transparent';
+      btnStatusDmed.style.color = '#10B981';
+      btnStatusDmed.innerHTML = '<i class="fas fa-check"></i> DM\'ed';
+    }
+  }
+
+  // Bind Dynamic Profile and DM Links
+  if (btnOpenProfile) {
+    if (target.profileUrl) {
+      btnOpenProfile.style.display = 'inline-flex';
+      btnOpenProfile.href = target.profileUrl;
+    } else if (target.postUrl) {
+      btnOpenProfile.style.display = 'inline-flex';
+      btnOpenProfile.href = target.postUrl;
+    } else {
+      btnOpenProfile.style.display = 'none';
+    }
+  }
+
+  if (btnOpenDm) {
+    let dmUrl = null;
+    const profileUrl = target.profileUrl || '';
+    if (profileUrl.includes('x.com') || profileUrl.includes('twitter.com')) {
+      dmUrl = 'https://x.com/messages';
+    } else if (profileUrl.includes('linkedin.com')) {
+      dmUrl = 'https://www.linkedin.com/messaging/';
+    } else if (profileUrl.includes('reddit.com')) {
+      const match = profileUrl.match(/reddit\.com\/user\/([^\/\?#]+)/);
+      if (match && match[1]) {
+        dmUrl = `https://www.reddit.com/message/compose/?to=${match[1]}`;
+      } else {
+        dmUrl = 'https://www.reddit.com/message/';
+      }
+    }
+    if (dmUrl) {
+      btnOpenDm.style.display = 'inline-flex';
+      btnOpenDm.href = dmUrl;
+    } else {
+      btnOpenDm.style.display = 'none';
+    }
+  }
+
   // AI Drafts
   const repliesContainer = document.getElementById('drawer-replies-container');
   const generateBtn = document.getElementById('btn-generate-ondemand');
@@ -134,10 +188,12 @@ function selectTarget(target) {
     if (generateBtn) generateBtn.style.display = 'none';
 
     const r = target.replies;
-    if (profEl) profEl.textContent = r.Professional || r.Option1 || "No professional draft generated.";
-    if (humorEl) humorEl.textContent = r.Humor || r.Option2 || "No humor draft generated.";
-    if (dirEl) dirEl.textContent = r.Director || r.Option3 || "No director draft generated.";
+    if (shortOpenerEl) shortOpenerEl.textContent = r.ShortOpener || r.Professional || r.Option1 || "No DM opener draft generated.";
+    if (linkedinRequestEl) linkedinRequestEl.textContent = r.LinkedInRequest || r.Humor || r.Option2 || "No connection note draft generated.";
   }
+
+  // Update Signal Trail timeline UI
+  updateSignalTrailUI(target);
 
   // Ensure main dashboard displays
   if (emptyStateEl) emptyStateEl.style.display = 'none';
@@ -220,10 +276,18 @@ function updateTargetsListUI() {
     const nameText = t.name || 'Target Lead';
     const scoreColorClass = t.score >= 80 ? 'score-high' : (t.score >= 50 ? 'score-med' : 'score-low');
     
+    const isDmed = t.status === 'dmed';
+    if (isDmed) {
+      badge.style.opacity = '0.6';
+    } else {
+      badge.style.opacity = '1';
+    }
+
     badge.innerHTML = `
       ${platIconHTML}
-      <span class="badge-name">${nameText}</span>
+      <span class="badge-name" style="${isDmed ? 'text-decoration: line-through;' : ''}">${nameText}</span>
       <span class="badge-score ${scoreColorClass}">${t.score}</span>
+      ${isDmed ? '<i class="fas fa-check-circle" style="color:#10B981; font-size: 11px; margin-left: 2px;"></i>' : ''}
     `;
 
     badge.onclick = (e) => {
@@ -247,6 +311,84 @@ function getTargetPlatformLabel(target) {
   return 'Community Feed';
 }
 
+// ═══════════ SIGNAL TRAIL & SNAPSHOT HELPERS ═══════════
+
+function updateSignalTrailUI(target) {
+  if (!signalTrailListEl) return;
+  signalTrailListEl.innerHTML = '';
+  
+  const history = target.history || [];
+  if (history.length === 0) {
+    signalTrailListEl.innerHTML = '<div style="font-size: 10px; color: #94A3B8; text-align: center; padding: 10px 0;">No prior signals tracked.</div>';
+    return;
+  }
+  
+  // Sort history by timestamp descending
+  const sortedHistory = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  sortedHistory.forEach(item => {
+    const timeStr = new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const scoreColorClass = item.score >= 80 ? 'score-high' : (item.score >= 50 ? 'score-med' : 'score-low');
+    
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.innerHTML = `
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-header">
+          <span class="timeline-time">${timeStr}</span>
+          <span class="timeline-score ${scoreColorClass}">${item.score}</span>
+        </div>
+        <div class="timeline-body">${escapeHtml(item.postText || item.reason || '')}</div>
+      </div>
+    `;
+    signalTrailListEl.appendChild(div);
+  });
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function copyShareableSnapshot(target) {
+  if (!target) return;
+  
+  // Desensitize: hide real name, use generic title
+  const profile = target.profile || {};
+  const company = profile.company || "Stealth Startup";
+  const bio = profile.bio || "Founder / Builder";
+  
+  let title = "B2B Prospect";
+  if (bio && bio !== 'Pending target acquisition.' && bio !== 'High Net-Worth Individual / Decision Maker.') {
+    title = bio.split(' ').slice(0, 4).join(' ');
+  }
+  
+  const postExcerpt = target.postText ? (target.postText.length > 120 ? target.postText.substring(0, 120) + "..." : target.postText) : "";
+  
+  const text = `🔥 [Lead Snapper Signal Captured]
+🎯 Intent Score: ${target.score}% | Category: ${target.category || 'COMMERCIAL_LEAD'}
+👤 Role: ${title} @ ${company}
+📌 Pain Point: ${target.reason || 'High buying intent detected.'}
+💬 Post: "${postExcerpt}"
+
+---
+I found these with Lead Snapper. It watches Twitter/LinkedIn while I code.`;
+
+  safeCopyToClipboard(text).then(ok => {
+    if (ok) {
+      showToast('✓ Shareable Snapshot copied!');
+    } else {
+      showToast('⚠️ Copy failed');
+    }
+  });
+}
+
 // ═══════════ DIRECT SNIPE & WEBHOOK ACTIONS ═══════════
 
 if (directSnipeBtn) {
@@ -261,19 +403,19 @@ if (directSnipeBtn) {
     directSnipeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
     directSnipeBtn.disabled = true;
 
-    const profEl = document.getElementById('reply-prof');
+    const profEl = document.getElementById('reply-short-opener');
     const replyText = profEl ? profEl.textContent : '';
 
     safeCopyToClipboard(replyText).then(ok => {
       executeReplyRPA(replyText);
       setTimeout(() => {
         if (ok && replyText) {
-          directSnipeBtn.innerHTML = '<i class="fas fa-check"></i> Snipe Executed';
+          directSnipeBtn.innerHTML = '<i class="fas fa-check"></i> Snap Executed';
           directSnipeBtn.style.background = '#10B981';
           directSnipeBtn.style.color = '#FFFFFF';
-          showToast('✓ Snipe copied & auto-populated!');
+          showToast('✓ Snap copied & auto-populated!');
         } else {
-          directSnipeBtn.innerHTML = '⚠️ Snipe Failed';
+          directSnipeBtn.innerHTML = '⚠️ Snap Failed';
           directSnipeBtn.style.background = '#EF4444';
           directSnipeBtn.style.color = '#FFFFFF';
         }
@@ -306,7 +448,7 @@ if (syncWebhookBtn) {
 
       if (webhookUrl) {
         const payload = {
-          source: 'LeadSniper_V3_Radar',
+          source: 'LeadSnapper_V3_Radar',
           timestamp: new Date().toISOString(),
           target_name: currentSelectedTarget.name || 'Target',
           intent_score: currentSelectedTarget.score,
@@ -360,6 +502,17 @@ if (syncWebhookBtn) {
         }, 500);
       }
     });
+  });
+}
+
+if (btnShareSnapshot) {
+  btnShareSnapshot.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currentSelectedTarget) {
+      showToast('⚠️ No target selected');
+      return;
+    }
+    copyShareableSnapshot(currentSelectedTarget);
   });
 }
 
@@ -688,16 +841,16 @@ async function safeCopyToClipboard(text) {
 
 let autoSnipeCount = 0;
 
-function spawnTarget(id, score, name, reason, category, profile=null, replies=null, tabId=null, autoCaptured=false) {
+function spawnTarget(id, score, name, reason, category, profile=null, replies=null, tabId=null, autoCaptured=false, status=null) {
   // Prevent duplicates
   if (targets.find(t => t.id === id)) return;
   
-  const newTarget = { id, score, name: name || 'Target Lead', reason, category, profile, replies, tabId, autoCaptured };
+  const newTarget = { id, score, name: name || 'Target Lead', reason, category, profile, replies, tabId, autoCaptured, status };
   targets.push(newTarget);
   
   updateTargetsListUI();
 
-  // If autoCaptured, update the Snipe Queue
+  // If autoCaptured, update the Capture Queue
   if (autoCaptured) {
     const queueContainer = document.getElementById('snipe-queue-container');
     const queueList = document.getElementById('snipe-queue-list');
@@ -741,7 +894,7 @@ chrome.runtime.onMessage.addListener((msg) => {
       targets = [];
       currentSelectedTarget = null;
     }
-    spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured);
+    spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured, p.status);
   }
   
   if (msg.type === 'SELECT_TARGET_IN_PANEL') {
@@ -763,13 +916,72 @@ function loadStoredTargets() {
       if (response && response.targets && response.targets.length > 0) {
         console.log(`[Radar] Restoring ${response.targets.length} targets...`);
         response.targets.forEach(p => {
-          spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured);
+          spawnTarget(p.id || Date.now(), p.score, p.name || 'Target', p.reason, p.category, p.profile, p.replies, p.tabId, p.autoCaptured, p.status);
         });
       }
     });
   } catch(e) {
     console.warn('[Radar] Failed to load stored targets:', e);
   }
+}
+
+// ═══════════ STATUS MARKER ACTIONS ═══════════
+
+if (btnStatusDmed) {
+  btnStatusDmed.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currentSelectedTarget) return;
+
+    const newStatus = currentSelectedTarget.status === 'dmed' ? null : 'dmed';
+    currentSelectedTarget.status = newStatus;
+
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_TARGET_STATUS',
+      targetId: currentSelectedTarget.id,
+      status: newStatus
+    }, (res) => {
+      selectTarget(currentSelectedTarget);
+      updateTargetsListUI();
+      if (newStatus === 'dmed') {
+        showToast('✓ Marked as DM\'ed');
+      } else {
+        showToast('Status Reset');
+      }
+    });
+  });
+}
+
+if (btnStatusArchive) {
+  btnStatusArchive.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currentSelectedTarget) return;
+
+    const targetId = currentSelectedTarget.id;
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_TARGET_STATUS',
+      targetId: targetId,
+      status: 'archived'
+    }, (res) => {
+      // Remove from local array
+      const idx = targets.findIndex(t => t.id === targetId);
+      if (idx !== -1) {
+        targets.splice(idx, 1);
+      }
+      
+      showToast('✓ Lead Archived & Removed');
+      
+      // Select next target
+      if (targets.length > 0) {
+        selectTarget(targets[0]);
+      } else {
+        currentSelectedTarget = null;
+        if (mainDashboardEl) mainDashboardEl.style.display = 'none';
+        if (emptyStateEl) emptyStateEl.style.display = 'flex';
+        if (signalsCardEl) signalsCardEl.style.display = 'none';
+      }
+      updateTargetsListUI();
+    });
+  });
 }
 
 // ═══════════ SYSTEM STARTUP ═══════════

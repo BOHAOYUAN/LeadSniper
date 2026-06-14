@@ -46,8 +46,8 @@ function Create-Icon {
     $bmp.Dispose()
 }
 
-Create-Icon 16 "e:\project\LeadSniper\icon16.png"
-Create-Icon 48 "e:\project\LeadSniper\icon48.png"
-Create-Icon 128 "e:\project\LeadSniper\icon128.png"
+Create-Icon 16 "e:\project\LeadSnapper\icon16.png"
+Create-Icon 48 "e:\project\LeadSnapper\icon48.png"
+Create-Icon 128 "e:\project\LeadSnapper\icon128.png"
 
-Write-Output "✅ Icons generated successfully at e:\project\LeadSniper\"
+Write-Output "✅ Icons generated successfully at e:\project\LeadSnapper\"
